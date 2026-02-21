@@ -6,9 +6,10 @@
  * data consistency (no partial failures).
  */
 
-import type { PrismaClient, Segment, Tier } from '../generated/prisma/client';
+import type { PrismaClient, Segment, Tier, BlockType } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { DEFAULT_SEGMENT, DEFAULT_TIERS } from '../lib/tenant-defaults';
+import type { SetupProgress } from '@macon/contracts';
 
 /**
  * Options for createDefaultData
@@ -228,5 +229,178 @@ export class TenantOnboardingService {
     });
 
     return { alreadyCompleted: false };
+  }
+
+  // ==========================================================================
+  // Setup Progress (Phase 6 — Checklist)
+  // ==========================================================================
+
+  /**
+   * Derive setup progress from actual data state (no redundant storage).
+   *
+   * 8 checklist items, each with a weight. Percentage = completedWeight / totalActiveWeight * 100.
+   * Dismissed items are excluded from both numerator and denominator.
+   */
+  async deriveSetupProgress(tenantId: string): Promise<SetupProgress> {
+    // Load tenant + related data in parallel
+    const [tenant, draftSections, publishedSections] = await Promise.all([
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          stripeOnboarded: true,
+          googleCalendarConnected: true,
+          dismissedChecklistItems: true,
+        },
+      }),
+      // Check draft sections (built by background pipeline)
+      this.prisma.sectionContent.findMany({
+        where: { tenantId, isDraft: true },
+        select: { blockType: true },
+        take: 100,
+      }),
+      // Check published sections
+      this.prisma.sectionContent.findMany({
+        where: { tenantId, isDraft: false },
+        select: { blockType: true },
+        take: 100,
+      }),
+    ]);
+
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+
+    const dismissed = tenant.dismissedChecklistItems || [];
+    const draftTypes = new Set<BlockType>(draftSections.map((s) => s.blockType));
+    const publishedTypes = new Set<BlockType>(publishedSections.map((s) => s.blockType));
+
+    // Check if MVP sections (HERO, ABOUT, SERVICES) have content
+    const mvpBlockTypes: BlockType[] = ['HERO', 'ABOUT', 'SERVICES'];
+    const hasMvpSections = mvpBlockTypes.every((t) => draftTypes.has(t));
+
+    const items: Array<{
+      id: string;
+      label: string;
+      completed: boolean;
+      weight: number;
+      action:
+        | { type: 'agent_prompt'; prompt: string }
+        | { type: 'navigate'; path: string }
+        | { type: 'modal'; modal: string };
+    }> = [
+      {
+        id: 'review_sections',
+        label: 'Review your website sections',
+        completed: hasMvpSections,
+        weight: 15,
+        action: { type: 'navigate', path: '/tenant/dashboard?showPreview=true' },
+      },
+      {
+        id: 'upload_photos',
+        label: 'Upload your photos',
+        completed: false, // TODO: implement photo upload tracking
+        weight: 15,
+        action: { type: 'modal', modal: 'photo-upload' },
+      },
+      {
+        id: 'add_testimonials',
+        label: 'Add testimonials',
+        completed: draftTypes.has('TESTIMONIALS'),
+        weight: 15,
+        action: {
+          type: 'agent_prompt',
+          prompt: "Let's add a testimonials section. Do you have any client quotes I can use?",
+        },
+      },
+      {
+        id: 'add_faq',
+        label: 'Add FAQ section',
+        completed: draftTypes.has('FAQ'),
+        weight: 10,
+        action: {
+          type: 'agent_prompt',
+          prompt: "Let's create an FAQ section. What questions do your clients ask most?",
+        },
+      },
+      {
+        id: 'add_gallery',
+        label: 'Add a gallery',
+        completed: draftTypes.has('GALLERY'),
+        weight: 10,
+        action: {
+          type: 'agent_prompt',
+          prompt: "Let's set up your portfolio gallery. Do you have photos to showcase?",
+        },
+      },
+      {
+        id: 'connect_stripe',
+        label: 'Connect Stripe for payments',
+        completed: tenant.stripeOnboarded === true,
+        weight: 15,
+        action: { type: 'navigate', path: '/tenant/payments' },
+      },
+      {
+        id: 'set_availability',
+        label: 'Set your availability',
+        completed: tenant.googleCalendarConnected === true,
+        weight: 10,
+        action: { type: 'navigate', path: '/tenant/calendar' },
+      },
+      {
+        id: 'publish_website',
+        label: 'Publish your website',
+        completed: publishedTypes.size > 0,
+        weight: 10,
+        action: {
+          type: 'agent_prompt',
+          prompt: "Ready to publish? I'll walk you through it.",
+        },
+      },
+    ];
+
+    // Build final items with dismissed flag
+    const setupItems = items.map((item) => ({
+      ...item,
+      dismissed: dismissed.includes(item.id),
+    }));
+
+    // Calculate percentage excluding dismissed items
+    const activeItems = setupItems.filter((i) => !i.dismissed);
+    const totalWeight = activeItems.reduce((sum, i) => sum + i.weight, 0);
+    const completedWeight = activeItems
+      .filter((i) => i.completed)
+      .reduce((sum, i) => sum + i.weight, 0);
+    const percentage = totalWeight > 0 ? Math.round((completedWeight / totalWeight) * 100) : 0;
+
+    return { percentage, items: setupItems };
+  }
+
+  /**
+   * Dismiss a checklist item (add to dismissedChecklistItems array).
+   * Idempotent: dismissing an already-dismissed item is a no-op.
+   */
+  async dismissChecklistItem(tenantId: string, itemId: string): Promise<void> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { dismissedChecklistItems: true },
+    });
+
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+
+    const dismissed = tenant.dismissedChecklistItems || [];
+    if (dismissed.includes(itemId)) {
+      return; // Already dismissed, no-op
+    }
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        dismissedChecklistItems: [...dismissed, itemId],
+      },
+    });
+
+    logger.info({ tenantId, itemId }, '[Onboarding] Dismissed checklist item');
   }
 }

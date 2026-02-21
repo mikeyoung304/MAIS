@@ -668,6 +668,7 @@ export function createV1Router(
       tenantRepo,
       intakeService,
       buildService: services.backgroundBuild,
+      onboardingService: services.tenantOnboarding,
     });
     app.use('/v1/tenant-admin/onboarding', tenantAuthMiddleware, tenantAdminOnboardingRoutes);
     logger.info('✅ Tenant admin onboarding routes mounted at /v1/tenant-admin/onboarding');
@@ -787,6 +788,8 @@ export function createV1Router(
       availabilityService: services.availability,
       googleCalendarService: services.googleCalendar,
       blackoutRepo: new PrismaBlackoutRepository(prismaClient),
+      // Onboarding tools deps (tenant-agent setup progress)
+      tenantOnboardingService: services.tenantOnboarding,
     });
     app.use('/v1/internal/agent', internalAgentRoutes);
     logger.info('✅ Internal agent routes mounted at /v1/internal/agent');

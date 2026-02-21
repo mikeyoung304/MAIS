@@ -22,6 +22,7 @@ import { logger } from '@/lib/logger';
 import { getErrorMessage } from '@/lib/errors';
 import { StartTrialCard, TrialBanner } from '@/components/trial';
 import { agentUIActions, useAgentUIStore, selectIsInitialized } from '@/stores/agent-ui-store';
+import { SetupChecklist } from '@/components/dashboard/SetupChecklist';
 
 interface DashboardStats {
   tiersCount: number;
@@ -67,6 +68,7 @@ function TenantDashboardPageInner() {
   const searchParams = useSearchParams();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
+  const [onboardingStatus, setOnboardingStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(authSlug || null);
@@ -103,21 +105,29 @@ function TenantDashboardPageInner() {
         }
       }
 
-      // Fetch all data in parallel (including trial status)
-      const [tiersResponse, bookingsResponse, blackoutsResponse, stripeResponse, trialResponse] =
-        await Promise.all([
-          fetch('/api/tenant-admin/tiers'),
-          fetch('/api/tenant-admin/bookings'),
-          fetch('/api/tenant-admin/blackouts'),
-          fetch('/api/tenant-admin/stripe/status'),
-          fetch('/api/tenant-admin/trial/status'),
-        ]);
+      // Fetch all data in parallel (including trial status + onboarding state)
+      const [
+        tiersResponse,
+        bookingsResponse,
+        blackoutsResponse,
+        stripeResponse,
+        trialResponse,
+        onboardingResponse,
+      ] = await Promise.all([
+        fetch('/api/tenant-admin/tiers'),
+        fetch('/api/tenant-admin/bookings'),
+        fetch('/api/tenant-admin/blackouts'),
+        fetch('/api/tenant-admin/stripe/status'),
+        fetch('/api/tenant-admin/trial/status'),
+        fetch('/api/tenant-admin/onboarding/state'),
+      ]);
 
       const tiers = tiersResponse.ok ? await tiersResponse.json() : [];
       const bookings = bookingsResponse.ok ? await bookingsResponse.json() : [];
       const blackouts = blackoutsResponse.ok ? await blackoutsResponse.json() : [];
       const stripeStatus = stripeResponse.ok ? await stripeResponse.json() : null;
       const trial = trialResponse.ok ? await trialResponse.json() : null;
+      const onboarding = onboardingResponse.ok ? await onboardingResponse.json() : null;
 
       setStats({
         tiersCount: Array.isArray(tiers) ? tiers.length : 0,
@@ -128,6 +138,10 @@ function TenantDashboardPageInner() {
 
       if (trial) {
         setTrialStatus(trial);
+      }
+
+      if (onboarding?.status) {
+        setOnboardingStatus(onboarding.status);
       }
     } catch (err) {
       logger.error(
@@ -213,6 +227,9 @@ function TenantDashboardPageInner() {
         </h1>
         <p className="mt-2 text-text-muted">Here&apos;s an overview of your business.</p>
       </div>
+
+      {/* Setup Checklist - Show when onboarding is in SETUP phase */}
+      {onboardingStatus === 'SETUP' && <SetupChecklist />}
 
       {/* Start Trial Card - Show if has packages but no trial started */}
       {trialStatus && trialStatus.canStartTrial && (
@@ -310,8 +327,8 @@ function TenantDashboardPageInner() {
         </div>
       </div>
 
-      {/* Getting Started (shown if Stripe not connected) */}
-      {stats && !stats.hasStripeConnected && (
+      {/* Getting Started (shown if Stripe not connected AND checklist not visible) */}
+      {stats && !stats.hasStripeConnected && onboardingStatus !== 'SETUP' && (
         <Card colorScheme="dark" className="border-2 border-amber-700/30 bg-amber-950/30">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

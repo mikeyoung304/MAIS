@@ -509,3 +509,39 @@ export const OnboardingMachineEventSchema = z.discriminatedUnion('type', [
 ]);
 
 export type OnboardingMachineEvent = z.infer<typeof OnboardingMachineEventSchema>;
+
+// ============================================================================
+// Setup Progress (Phase 6 — Checklist)
+// ============================================================================
+
+export const SetupActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('agent_prompt'), prompt: z.string() }),
+  z.object({ type: z.literal('navigate'), path: z.string() }),
+  z.object({ type: z.literal('modal'), modal: z.string() }),
+]);
+
+export type SetupAction = z.infer<typeof SetupActionSchema>;
+
+export const SetupItemSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  completed: z.boolean(),
+  dismissed: z.boolean(),
+  action: SetupActionSchema,
+  weight: z.number().int().min(1),
+});
+
+export type SetupItem = z.infer<typeof SetupItemSchema>;
+
+export const SetupProgressSchema = z.object({
+  percentage: z.number().int().min(0).max(100),
+  items: z.array(SetupItemSchema),
+});
+
+export type SetupProgress = z.infer<typeof SetupProgressSchema>;
+
+export const DismissChecklistItemSchema = z.object({
+  itemId: z.string().min(1),
+});
+
+export type DismissChecklistItemInput = z.infer<typeof DismissChecklistItemSchema>;

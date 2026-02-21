@@ -23,17 +23,19 @@ import { ValidationError } from '../lib/errors';
 import type { OnboardingIntakeService } from '../services/onboarding-intake.service';
 import { IntakeValidationError } from '../services/onboarding-intake.service';
 import type { BackgroundBuildService } from '../services/background-build.service';
-import { IntakeAnswerRequestSchema } from '@macon/contracts';
+import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
+import { IntakeAnswerRequestSchema, DismissChecklistItemSchema } from '@macon/contracts';
 
 interface OnboardingRoutesOptions {
   config: Config;
   tenantRepo: PrismaTenantRepository;
   intakeService?: OnboardingIntakeService;
   buildService?: BackgroundBuildService;
+  onboardingService?: TenantOnboardingService;
 }
 
 export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptions): Router {
-  const { config, tenantRepo, intakeService, buildService } = options;
+  const { config, tenantRepo, intakeService, buildService, onboardingService } = options;
   const router = Router();
 
   /**
@@ -431,6 +433,70 @@ export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptio
       res.status(200).json(result);
     } catch (error) {
       next(error);
+    }
+  });
+
+  // ==========================================================================
+  // Setup Progress Routes (Phase 6 — Checklist)
+  // ==========================================================================
+
+  /**
+   * GET /setup-progress
+   *
+   * Returns derived setup progress with 8 checklist items.
+   * Used by dashboard SetupChecklist component and agent tool.
+   *
+   * Requires: onboardingStatus in ['SETUP', 'COMPLETE']
+   */
+  router.get('/setup-progress', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!onboardingService) {
+        res.status(503).json({ error: 'Onboarding service unavailable' });
+        return;
+      }
+
+      const progress = await onboardingService.deriveSetupProgress(tenantAuth.tenantId);
+      res.json(progress);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * POST /dismiss-item
+   *
+   * Dismisses a checklist item. Idempotent.
+   * Body: { itemId: string }
+   */
+  router.post('/dismiss-item', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!onboardingService) {
+        res.status(503).json({ error: 'Onboarding service unavailable' });
+        return;
+      }
+
+      const parsed = DismissChecklistItemSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: 'Invalid request', details: parsed.error.issues });
+        return;
+      }
+
+      await onboardingService.dismissChecklistItem(tenantAuth.tenantId, parsed.data.itemId);
+      res.json({ dismissed: true });
+    } catch (err) {
+      next(err);
     }
   });
 

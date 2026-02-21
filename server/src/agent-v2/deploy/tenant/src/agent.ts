@@ -95,6 +95,9 @@ import {
   // Calendar Management (T1/T2) - Google Calendar Integration
   checkCalendarAvailabilityTool,
   blockCalendarDateTool,
+
+  // Setup Progress (T1) - Onboarding Checklist
+  getSetupProgressTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -109,7 +112,7 @@ import {
  * Project Hub agents.
  *
  * Current Phase: 9 (Onboarding Conversation Redesign)
- * Tool count: 38
+ * Tool count: 39
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
@@ -122,6 +125,7 @@ import {
  * - Catalog management (3) - manage_segments, manage_tiers, manage_addons
  * - Guided Refinement (4) - generate_section_variants, apply_section_variant, mark_section_complete, get_next_incomplete_section
  * - Calendar management (2) - check_calendar_availability, block_calendar_date
+ * - Setup progress (1) - get_setup_progress
  */
 export const tenantAgent = new LlmAgent({
   name: 'tenant',
@@ -276,6 +280,15 @@ export const tenantAgent = new LlmAgent({
 
     // T2: Block a date from bookings (adds blackout)
     blockCalendarDateTool,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Setup Progress (T1) - Onboarding Checklist
+    // Returns checklist completion state so agent can suggest next steps.
+    // @see docs/plans/2026-02-20-feat-onboarding-redesign-plan.md (Phase 6)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // T1: Check tenant's setup progress (read-only)
+    getSetupProgressTool,
   ],
 
   // Lifecycle callbacks for observability

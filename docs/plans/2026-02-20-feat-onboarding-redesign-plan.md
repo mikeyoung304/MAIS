@@ -733,29 +733,29 @@ refetchInterval: (query) => {
 
 **Video player:**
 
-- [ ] New component: `OnboardingVideo.tsx` — fullscreen video with skip button
-- [ ] Host video on CDN (static asset, MP4/H.264, <20MB, 720p)
-- [ ] V1 placeholder: simple animated walkthrough or screen recording
-- [ ] Muted autoplay (browser-safe) with option to unmute
-- [ ] "Skip" button in top-right corner
-- [ ] "Your website is ready!" indicator overlaid when build completes
+- [x] New component: `OnboardingVideo.tsx` — fullscreen video with skip button
+- [x] Host video on CDN (static asset, MP4/H.264, <20MB, 720p)
+- [x] V1 placeholder: simple animated walkthrough or screen recording
+- [x] Muted autoplay (browser-safe) with option to unmute
+- [x] "Skip" button in top-right corner
+- [x] "Your website is ready!" indicator overlaid when build completes
 - [ ] Captions track for accessibility (WCAG 2.1 AA)
-- [ ] `prefers-reduced-motion`: show poster image with play button instead of autoplay
-- [ ] Fallback if video fails to load: show build progress directly
+- [x] `prefers-reduced-motion`: show poster image with play button instead of autoplay
+- [x] Fallback if video fails to load: show build progress directly
 
 **Progressive reveal:**
 
-- [ ] Sections appear individually as they complete (not all-at-once)
-- [ ] Skeleton shimmer for pending sections → cross-dissolve new content in (~200ms)
-- [ ] Transition from video/loading → full reveal when all 3 sections ready
-- [ ] Celebration moment: brief animation + "Your website is live (in draft)" message
+- [x] Sections appear individually as they complete (not all-at-once)
+- [x] Skeleton shimmer for pending sections → cross-dissolve new content in (~200ms)
+- [x] Transition from video/loading → full reveal when all 3 sections ready
+- [x] Celebration moment: brief animation + "Your website is live (in draft)" message
 
 **Agent UI store changes:**
 
-- [ ] New view state: `'video'` — between `coming_soon` and `revealing`
-- [ ] New view state: `'building'` — shows section-level progress
-- [ ] Update transition map: `video → building → revealing → preview`
-- [ ] Guard: only `revealSite()` can transition from building → revealing (existing pattern from `ONBOARDING_PREVIEW_STATE_GUARDS_AND_STALE_IFRAME_FIX.md`)
+- [x] New view state: `'video'` — between `coming_soon` and `revealing`
+- [x] New view state: `'building'` — shows section-level progress
+- [x] Update transition map: `video → building → revealing → preview`
+- [x] Guard: only `revealSite()` can transition from building → revealing (existing pattern from `ONBOARDING_PREVIEW_STATE_GUARDS_AND_STALE_IFRAME_FIX.md`)
 
 **Files modified/created:**
 
@@ -793,23 +793,23 @@ refetchInterval: (query) => {
 
 **Checklist backend:**
 
-- [ ] New service function: `deriveSetupProgress(tenant)` in `onboarding.service.ts`
-- [ ] New route: `GET /api/v1/tenant/onboarding/setup-progress` — returns SetupProgress
-- [ ] New route: `POST /api/v1/tenant/onboarding/dismiss-item` — adds item to `dismissedChecklistItems`
-- [ ] New agent tool: `get_setup_progress` — calls same `deriveSetupProgress()` function
-- [ ] 8 checklist items with completion derivation (see Technical Approach section above)
-- [ ] Each item has weight for percentage calculation
+- [x] New service function: `deriveSetupProgress(tenant)` in `onboarding.service.ts`
+- [x] New route: `GET /api/v1/tenant/onboarding/setup-progress` — returns SetupProgress
+- [x] New route: `POST /api/v1/tenant/onboarding/dismiss-item` — adds item to `dismissedChecklistItems`
+- [x] New agent tool: `get_setup_progress` — calls same `deriveSetupProgress()` function
+- [x] 8 checklist items with completion derivation (see Technical Approach section above)
+- [x] Each item has weight for percentage calculation
 
 **Checklist frontend:**
 
-- [ ] New component: `SetupChecklist.tsx` — progress bar + actionable items
-- [ ] Visible on dashboard when `onboardingStatus === 'SETUP'`
-- [ ] Progress ring or bar: "Your website is X% complete"
-- [ ] Each item shows: icon + label + completed/pending/dismissed state
-- [ ] Click action: navigate, open agent with prompt, or open modal
-- [ ] Dismiss (X) button per item (with "are you sure?" for important items)
-- [ ] Auto-dismisses when `onboardingStatus → COMPLETE` (after publish)
-- [ ] Responsive: collapses to compact view on mobile
+- [x] New component: `SetupChecklist.tsx` — progress bar + actionable items
+- [x] Visible on dashboard when `onboardingStatus === 'SETUP'`
+- [x] Progress ring or bar: "Your website is X% complete"
+- [x] Each item shows: icon + label + completed/pending/dismissed state
+- [x] Click action: navigate, open agent with prompt, or open modal
+- [x] Dismiss (X) button per item (with "are you sure?" for important items)
+- [x] Auto-dismisses when `onboardingStatus → COMPLETE` (after publish)
+- [x] Responsive: collapses to compact view on mobile
 
 **Agent prompt rewrite:**
 
