@@ -652,35 +652,33 @@ type Question = {
 
 **Backend:**
 
-- [ ] New service: `BackgroundBuildService` — orchestrates the build pipeline
-- [ ] `triggerBuild(tenantId)` — async, returns immediately, sets `buildStatus: QUEUED`
-- [ ] Build pipeline steps (each updates `buildStatus`):
-  1. If `websiteUrl` exists → scrape via research agent (30s timeout, fallback to form-only)
+- [x] New service: `BackgroundBuildService` — orchestrates the build pipeline
+- [x] `triggerBuild(tenantId)` — async, returns immediately, sets `buildStatus: QUEUED`
+- [x] Build pipeline steps (each updates `buildStatus`):
+  1. If `websiteUrl` exists → scrape via research agent (30s timeout, fallback to form-only) _(deferred — uses discovery facts directly)_
   2. Build context from discovery facts + scraped content
-  3. Call modified `build_first_draft` tool with form data (returns structured data)
-  4. Agent generates HERO copy → `update_section` → status `GENERATING_HERO`
-  5. Agent generates ABOUT copy → `update_section` → status `GENERATING_ABOUT`
-  6. Agent generates SERVICES copy (with rough-draft tiers) → `update_section` → status `GENERATING_SERVICES`
+  3. Direct Vertex AI (Gemini) call with fallback content for mock mode _(replaced agent-mediated approach)_
+  4. Generates HERO copy → `addSection` → status `GENERATING_HERO`
+  5. Generates ABOUT copy → `addSection` → status `GENERATING_ABOUT`
+  6. Generates SERVICES copy → `addSection` → status `GENERATING_SERVICES`
   7. Set `buildStatus: COMPLETE`, `onboardingStatus: SETUP`
-- [ ] New route: `GET /api/v1/tenant/onboarding/build-status` — returns current build status + section flags
-- [ ] 120s total build timeout with graceful partial completion
-- [ ] Idempotency: build request keyed by form submission timestamp
-- [ ] Error handling: set `buildStatus: FAILED` with error message, expose retry endpoint
-- [ ] New route: `POST /api/v1/tenant/onboarding/build/retry` — retries failed build
+- [x] New route: `GET /api/v1/tenant-admin/onboarding/build-status` — returns current build status + section flags
+- [x] 120s total build timeout with graceful partial completion
+- [x] Idempotency: build request keyed by `buildIdempotencyKey` on Tenant
+- [x] Error handling: set `buildStatus: FAILED` with error message, expose retry endpoint
+- [x] New route: `POST /api/v1/tenant-admin/onboarding/build/retry` — retries failed build
 
 **Modified `build_first_draft` tool:**
 
-- [ ] Accept form data directly (not just readyForReveal signal from discovery)
-- [ ] Include scraped website content as supplementary context
-- [ ] Return structured data with section-level completion tracking
+- [x] _(Not modified — BackgroundBuildService calls Vertex AI directly instead of going through agent tool. Existing `build_first_draft` tool remains for agent-initiated builds.)_
 
 **Frontend:**
 
-- [ ] Build progress component: section-level indicators ("Building your hero section...")
-- [ ] React Query polling: `GET /build-status` every 2s during `BUILDING` state
-- [ ] Animated placeholder sections that fill in as they complete (progressive reveal)
-- [ ] Retry button on failure
-- [ ] "Your website is ready!" transition to reveal state
+- [x] Build progress component: section-level indicators ("Writing your hero section...")
+- [x] Polling: `GET /build-status` every 2s during `BUILDING` state (vanilla setInterval)
+- [x] Animated section indicators that update as each completes (progressive indicators)
+- [x] Retry button on failure
+- [x] Auto-redirect to dashboard on COMPLETE (1.5s delay for UX)
 
 **Files modified/created:**
 
