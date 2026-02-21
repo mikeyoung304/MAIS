@@ -183,12 +183,12 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const state = await contextBuilder.getOnboardingState(tenantId);
 
       logger.info(
-        { tenantId, phase: state.phase, factCount: state.factCount },
+        { tenantId, status: state.status, factCount: state.factCount },
         '[TenantAgent] Onboarding state retrieved'
       );
 
       res.json({
-        phase: state.phase,
+        status: state.status,
         isComplete: state.isComplete,
         isReturning: false,
         lastActiveAt: null,
@@ -202,7 +202,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         },
         resumeMessage: null,
         memory: {
-          currentPhase: state.phase,
+          currentStatus: state.status,
           discoveryData: state.discoveryFacts,
           marketResearchData: null,
           servicesData: null,
@@ -239,23 +239,23 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         const result = await tenantOnboarding.skipOnboarding(tenantId);
 
         logger.info(
-          { tenantId, previousPhase: result.previousPhase, reason },
+          { tenantId, previousStatus: result.previousStatus, reason },
           '[TenantAgent] Onboarding skipped'
         );
 
         res.json({
           success: true,
-          phase: result.phase,
+          status: result.status,
           message: 'Onboarding skipped. You can set up your business manually.',
         });
       } catch (serviceError) {
-        const err = serviceError as Error & { phase?: string };
+        const err = serviceError as Error & { status?: string };
         if (err.message === 'Tenant not found') {
           res.status(404).json({ error: 'Tenant not found' });
           return;
         }
         if (err.message === 'Onboarding already finished') {
-          res.status(409).json({ error: 'Onboarding already finished', phase: err.phase });
+          res.status(409).json({ error: 'Onboarding already finished', status: err.status });
           return;
         }
         throw serviceError;

@@ -32,7 +32,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
     name: 'Test Business',
     slug: 'test-business',
     tier: 'FREE' as const,
-    onboardingPhase: 'NOT_STARTED' as const,
+    onboardingStatus: 'PENDING_PAYMENT' as const,
     branding: {},
     isActive: true,
     createdAt: new Date(),
@@ -78,7 +78,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         businessName: 'Test Business',
         slug: 'test-business',
         onboardingComplete: false,
-        onboardingPhase: 'NOT_STARTED',
+        onboardingStatus: 'PENDING_PAYMENT',
         discoveryFacts: {},
         storefrontState: { hasDraft: false, hasPublished: false, completion: 0 },
         forbiddenSlots: [],
@@ -141,10 +141,10 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       });
     });
 
-    it('should return onboardingDone: true when phase is COMPLETED', async () => {
+    it('should return onboardingDone: true when status is COMPLETE', async () => {
       mockTenantRepo.findById = vi.fn().mockResolvedValue({
         ...mockTenant,
-        onboardingPhase: 'COMPLETED',
+        onboardingStatus: 'COMPLETE',
       });
 
       const response = await request(app)
@@ -156,10 +156,10 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       expect(response.body.onboardingDone).toBe(true);
     });
 
-    it('should return onboardingDone: true when phase is SKIPPED', async () => {
+    it('should return onboardingDone: true when status is COMPLETE (skip path)', async () => {
       mockTenantRepo.findById = vi.fn().mockResolvedValue({
         ...mockTenant,
-        onboardingPhase: 'SKIPPED',
+        onboardingStatus: 'COMPLETE',
       });
 
       const response = await request(app)
@@ -199,7 +199,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         businessName: 'Jane Photo',
         slug: 'jane-photo',
         onboardingComplete: false,
-        onboardingPhase: 'BUILDING',
+        onboardingStatus: 'BUILDING',
         discoveryFacts: {
           businessType: 'wedding photographer',
           businessName: 'Jane Photo',
@@ -234,7 +234,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         businessName: 'Test Business',
         slug: 'test-business',
         onboardingComplete: false,
-        onboardingPhase: 'BUILDING',
+        onboardingStatus: 'BUILDING',
         discoveryFacts: {
           businessType: 'life coach',
           yearsInBusiness: 3,
@@ -313,7 +313,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(mockTenantRepo.update).toHaveBeenCalledWith('tenant-123', {
-        onboardingPhase: 'COMPLETED',
+        onboardingStatus: 'COMPLETE',
         onboardingCompletedAt: expect.any(Date),
       });
     });
@@ -413,7 +413,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(mockTenantRepo.update).toHaveBeenCalledWith('tenant-123', {
-        onboardingPhase: 'COMPLETED',
+        onboardingStatus: 'COMPLETE',
         onboardingCompletedAt: expect.any(Date),
       });
     });

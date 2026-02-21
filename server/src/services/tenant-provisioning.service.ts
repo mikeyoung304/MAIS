@@ -49,15 +49,15 @@ export interface AdminCreateTenantInput {
 
 /**
  * Input for creating a new tenant via self-signup
+ *
+ * Onboarding redesign (2026-02-20): Simplified to email + password.
+ * Business details collected during intake form. No city/state/brainDump at signup.
  */
 export interface SignupCreateTenantInput {
   slug: string;
   businessName: string;
   email: string;
   passwordHash: string;
-  city?: string;
-  state?: string;
-  brainDump?: string;
 }
 
 /**
@@ -65,7 +65,8 @@ export interface SignupCreateTenantInput {
  */
 export interface ProvisionedTenantResult {
   tenant: Tenant;
-  segment: Segment;
+  /** Segment — absent for simplified signup (created by build pipeline later) */
+  segment?: Segment;
   /** Pricing tiers (GOOD/BETTER/BEST) created for the segment */
   tiers: Tier[];
   /** Section content created for the tenant's storefront */
@@ -239,8 +240,21 @@ export class TenantProvisioningService {
    *
    * @see todos/632-pending-p2-stricter-signup-error-handling.md
    */
+  /**
+   * Create a tenant from self-signup (simplified for onboarding redesign)
+   *
+   * Creates ONLY the tenant record with auth credentials and API keys.
+   * NO default segments, tiers, or sections — the background build pipeline
+   * creates these after the intake form is completed (Phase 4).
+   *
+   * Tenant starts in PENDING_PAYMENT status (Prisma @default).
+   *
+   * @param input - Tenant configuration from signup form
+   * @returns Provisioned tenant (no segment/tiers/sections)
+   * @throws TenantProvisioningError if provisioning fails
+   */
   async createFromSignup(input: SignupCreateTenantInput): Promise<ProvisionedTenantResult> {
-    const { slug, businessName, email, passwordHash, city, state, brainDump } = input;
+    const { slug, businessName, email, passwordHash } = input;
 
     // Generate API keys (even though signup users don't typically need them)
     const publicKey = apiKeyService.generatePublicKey(slug);
@@ -249,7 +263,7 @@ export class TenantProvisioningService {
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
-        // Create tenant with auth credentials
+        // Create tenant with auth credentials only — no defaults
         const tenant = await tx.tenant.create({
           data: {
             slug,
@@ -260,36 +274,32 @@ export class TenantProvisioningService {
             apiKeySecret: secretKeyHash,
             commissionPercent: 10.0,
             emailVerified: false,
-            city: city || null,
-            state: state || null,
-            brainDump: brainDump || null,
+            // onboardingStatus defaults to PENDING_PAYMENT via Prisma @default
+            branding: {},
           },
         });
-
-        // Create default segment, tiers, and section content
-        const { segment, tiers, sectionContent } = await this.createDefaultSegmentAndTiers(
-          tx,
-          tenant.id
-        );
 
         logger.info(
           {
             tenantId: tenant.id,
             slug: tenant.slug,
             email: tenant.email,
-            segmentId: segment.id,
-            tiersCreated: tiers.length,
-            sectionsCreated: sectionContent.length,
+            onboardingStatus: 'PENDING_PAYMENT',
           },
-          'Fully provisioned new tenant via signup'
+          'Created tenant via signup (simplified — no defaults)'
         );
 
-        return { tenant, segment, tiers, sectionContent };
+        // Return with empty segment/tiers/sections (created by build pipeline later)
+        return {
+          tenant,
+          segment: undefined,
+          tiers: [] as Tier[],
+          sectionContent: [] as SectionContent[],
+        };
       });
 
       return result;
     } catch (error) {
-      // Log the detailed error for debugging
       logger.error(
         {
           slug,
@@ -300,7 +310,6 @@ export class TenantProvisioningService {
         'Tenant provisioning failed - transaction rolled back'
       );
 
-      // Throw a user-friendly error (original error preserved as cause)
       throw new TenantProvisioningError(
         'Failed to complete signup. Please try again.',
         error instanceof Error ? error : new Error(String(error))

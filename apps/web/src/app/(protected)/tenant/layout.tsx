@@ -59,7 +59,7 @@ const queryClient = new QueryClient({
  */
 function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   const { tenantId, slug: tenantSlug } = useAuth();
-  const { currentPhase, revealCompleted, isLoading: onboardingLoading } = useOnboardingState();
+  const { currentStatus, revealCompleted, isLoading: onboardingLoading } = useOnboardingState();
   const localQueryClient = useQueryClient();
   const pathname = usePathname();
 
@@ -77,7 +77,7 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   const publishStatus = useRefinementStore(selectPublishStatus);
 
   // Derived: is this tenant still in onboarding?
-  const isOnboarding = currentPhase !== 'COMPLETED' && currentPhase !== 'SKIPPED';
+  const isOnboarding = currentStatus !== 'COMPLETE';
 
   // Publish celebration modal — shown once when publishStatus transitions to 'published'
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -87,8 +87,8 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [publishStatus]);
 
-  // Auto-redirect to Build Mode when reaching BUILDING phase
-  useBuildModeRedirect(tenantId, currentPhase, onboardingLoading);
+  // Auto-redirect to Build Mode when reaching BUILDING status
+  useBuildModeRedirect(tenantId, currentStatus, onboardingLoading);
 
   // ========== Widget Callbacks ==========
   // Connect publish-ready widget to agent chat

@@ -37,7 +37,7 @@ function seedTenants(): void {
     isActive: true,
     isTestTenant: false,
     tier: 'PRO',
-    onboardingPhase: 'COMPLETED',
+    onboardingStatus: 'COMPLETE',
     createdAt: new Date(),
     updatedAt: new Date(),
   });

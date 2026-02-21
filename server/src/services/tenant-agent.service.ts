@@ -140,7 +140,7 @@ export class TenantAgentService {
       forbiddenSlots: bootstrap?.forbiddenSlots ?? [],
       storefrontState: bootstrap?.storefrontState ?? null,
       onboardingComplete: bootstrap?.onboardingComplete ?? false,
-      onboardingPhase: bootstrap?.onboardingPhase ?? 'NOT_STARTED',
+      onboardingStatus: bootstrap?.onboardingStatus ?? 'PENDING_PAYMENT',
     };
 
     // Step 3: Create ADK session
@@ -528,7 +528,7 @@ export class TenantAgentService {
       forbiddenSlots: bootstrap?.forbiddenSlots ?? [],
       storefrontState: bootstrap?.storefrontState ?? null,
       onboardingComplete: bootstrap?.onboardingComplete ?? false,
-      onboardingPhase: bootstrap?.onboardingPhase ?? 'NOT_STARTED',
+      onboardingStatus: bootstrap?.onboardingStatus ?? 'PENDING_PAYMENT',
       // Injected recovery context
       recoveryContext: contextSummary,
     };
@@ -715,8 +715,8 @@ export class TenantAgentService {
       // Onboarding state
       if (bootstrap?.onboardingComplete) {
         parts.push('- Onboarding: COMPLETED');
-      } else if (bootstrap?.onboardingPhase) {
-        parts.push(`- Onboarding: ${bootstrap.onboardingPhase}`);
+      } else if (bootstrap?.onboardingStatus) {
+        parts.push(`- Onboarding: ${bootstrap.onboardingStatus}`);
       }
 
       // Storefront state
@@ -909,8 +909,8 @@ export function buildContextPrefix(bootstrap: BootstrapData): string | null {
   }
 
   parts.push(`onboardingComplete: ${bootstrap.onboardingComplete}`);
-  if (bootstrap.onboardingPhase) {
-    parts.push(`onboardingPhase: ${bootstrap.onboardingPhase}`);
+  if (bootstrap.onboardingStatus) {
+    parts.push(`onboardingStatus: ${bootstrap.onboardingStatus}`);
   }
 
   if (bootstrap.businessName) {

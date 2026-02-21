@@ -13,26 +13,86 @@
 import { z } from 'zod';
 
 // ============================================================================
-// Onboarding Phases
+// Onboarding Status (replaces OnboardingPhase — 2026-02-20 redesign)
 // ============================================================================
 
 /**
- * Onboarding phase enum - matches Prisma OnboardingPhase
+ * Onboarding status enum - matches Prisma OnboardingStatus
+ * State machine: PENDING_PAYMENT → PENDING_INTAKE → BUILDING → SETUP → COMPLETE
  */
-export const OnboardingPhaseSchema = z.enum(['NOT_STARTED', 'BUILDING', 'COMPLETED', 'SKIPPED']);
+export const OnboardingStatusSchema = z.enum([
+  'PENDING_PAYMENT',
+  'PENDING_INTAKE',
+  'BUILDING',
+  'SETUP',
+  'COMPLETE',
+]);
 
-export type OnboardingPhase = z.infer<typeof OnboardingPhaseSchema>;
+export type OnboardingStatus = z.infer<typeof OnboardingStatusSchema>;
 
 /**
- * Safely parse an unknown value to OnboardingPhase
- * Returns 'NOT_STARTED' if value is invalid or null/undefined
+ * Safely parse an unknown value to OnboardingStatus
+ * Returns 'PENDING_PAYMENT' if value is invalid or null/undefined
  *
- * Prevents unsafe `as OnboardingPhase` type assertions throughout the codebase.
+ * Prevents unsafe `as OnboardingStatus` type assertions throughout the codebase.
  */
-export function parseOnboardingPhase(value: unknown): OnboardingPhase {
-  const result = OnboardingPhaseSchema.safeParse(value);
-  return result.success ? result.data : 'NOT_STARTED';
+export function parseOnboardingStatus(value: unknown): OnboardingStatus {
+  const result = OnboardingStatusSchema.safeParse(value);
+  return result.success ? result.data : 'PENDING_PAYMENT';
 }
+
+/**
+ * Build status tracking for background website generation pipeline
+ */
+export const BuildStatusSchema = z.enum([
+  'QUEUED',
+  'GENERATING_HERO',
+  'GENERATING_ABOUT',
+  'GENERATING_SERVICES',
+  'COMPLETE',
+  'FAILED',
+]);
+
+export type BuildStatus = z.infer<typeof BuildStatusSchema>;
+
+/**
+ * Per-section status during build pipeline.
+ * Canonical definition — imported by background-build.service.ts and frontend components.
+ */
+export const SectionStatusSchema = z.enum(['pending', 'generating', 'complete', 'failed']);
+export type SectionStatus = z.infer<typeof SectionStatusSchema>;
+
+/**
+ * Build status response returned by GET /build-status.
+ * Canonical definition — imported by background-build.service.ts and frontend poll pages.
+ */
+export const BuildStatusResponseSchema = z.object({
+  buildStatus: z.string().nullable(),
+  buildError: z.string().nullable(),
+  sections: z.record(z.string(), SectionStatusSchema),
+});
+export type BuildStatusResponse = z.infer<typeof BuildStatusResponseSchema>;
+
+/**
+ * Valid state transitions for OnboardingStatus
+ * Used by route guards and service layer to enforce the state machine
+ */
+export const VALID_ONBOARDING_TRANSITIONS: Record<OnboardingStatus, OnboardingStatus[]> = {
+  PENDING_PAYMENT: ['PENDING_INTAKE'],
+  PENDING_INTAKE: ['BUILDING'],
+  BUILDING: ['SETUP', 'COMPLETE'], // COMPLETE if build fails but we want to skip
+  SETUP: ['COMPLETE'],
+  COMPLETE: [], // Terminal state
+};
+
+// Legacy aliases for backward compatibility during migration
+// TODO(2026-Q2): remove deprecated aliases
+/** @deprecated Use OnboardingStatusSchema */
+export const OnboardingPhaseSchema = OnboardingStatusSchema;
+/** @deprecated Use OnboardingStatus */
+export type OnboardingPhase = OnboardingStatus;
+/** @deprecated Use parseOnboardingStatus */
+export const parseOnboardingPhase = parseOnboardingStatus;
 
 // ============================================================================
 // Business Type and Industry
@@ -209,38 +269,42 @@ export type MarketingData = z.infer<typeof MarketingDataSchema>;
 // ============================================================================
 
 /**
- * Update onboarding state input - discriminated union
- * Ensures phase and data types are correctly paired at compile time.
- *
- * @example
- * const input: UpdateOnboardingStateInput = {
- *   phase: 'BUILDING',
- *   data: { startedAt: new Date().toISOString() }
- * };
+ * Update onboarding status input - discriminated union
+ * Ensures status and data types are correctly paired at compile time.
  */
-export const UpdateOnboardingStateInputSchema = z.discriminatedUnion('phase', [
+export const UpdateOnboardingStatusInputSchema = z.discriminatedUnion('status', [
   z.object({
-    phase: z.literal('BUILDING'),
+    status: z.literal('PENDING_INTAKE'),
     data: z.object({
-      startedAt: z.string().datetime(),
-      summary: z.string().optional(),
+      paidAt: z.string().datetime(),
+      stripeCustomerId: z.string().optional(),
     }),
   }),
   z.object({
-    phase: z.literal('COMPLETED'),
+    status: z.literal('BUILDING'),
+    data: z.object({
+      startedAt: z.string().datetime(),
+      idempotencyKey: z.string().optional(),
+    }),
+  }),
+  z.object({
+    status: z.literal('SETUP'),
+    data: z.object({
+      completedAt: z.string().datetime(),
+      sectionsBuilt: z.number().int().optional(),
+    }),
+  }),
+  z.object({
+    status: z.literal('COMPLETE'),
     data: z.object({
       completedAt: z.string().datetime(),
       summary: z.string().optional(),
     }),
   }),
-  z.object({
-    phase: z.literal('SKIPPED'),
-    data: z.object({
-      skippedAt: z.string().datetime(),
-      reason: z.string().optional(),
-    }),
-  }),
 ]);
+
+/** @deprecated Use UpdateOnboardingStatusInputSchema */
+export const UpdateOnboardingStateInputSchema = UpdateOnboardingStatusInputSchema;
 
 export type UpdateOnboardingStateInput = z.infer<typeof UpdateOnboardingStateInputSchema>;
 
@@ -255,14 +319,14 @@ export type UpdateOnboardingStateInput = z.infer<typeof UpdateOnboardingStateInp
  * error variants all with success: false. Zod's discriminatedUnion requires
  * unique discriminator values.
  */
-const UpdateOnboardingStateSuccessSchema = z.object({
+const UpdateOnboardingStatusSuccessSchema = z.object({
   success: z.literal(true),
-  phase: OnboardingPhaseSchema,
+  status: OnboardingStatusSchema,
   summary: z.string(),
   version: z.number().int(),
 });
 
-const UpdateOnboardingStateErrorSchema = z.union([
+const UpdateOnboardingStatusErrorSchema = z.union([
   z.object({
     success: z.literal(false),
     error: z.literal('INCOMPLETE_DATA'),
@@ -276,17 +340,22 @@ const UpdateOnboardingStateErrorSchema = z.union([
   z.object({
     success: z.literal(false),
     error: z.literal('INVALID_TRANSITION'),
-    currentPhase: OnboardingPhaseSchema,
-    attemptedPhase: OnboardingPhaseSchema,
+    currentStatus: OnboardingStatusSchema,
+    attemptedStatus: OnboardingStatusSchema,
   }),
 ]);
 
-export const UpdateOnboardingStateResultSchema = z.union([
-  UpdateOnboardingStateSuccessSchema,
-  UpdateOnboardingStateErrorSchema,
+export const UpdateOnboardingStatusResultSchema = z.union([
+  UpdateOnboardingStatusSuccessSchema,
+  UpdateOnboardingStatusErrorSchema,
 ]);
 
-export type UpdateOnboardingStateResult = z.infer<typeof UpdateOnboardingStateResultSchema>;
+export type UpdateOnboardingStatusResult = z.infer<typeof UpdateOnboardingStatusResultSchema>;
+
+/** @deprecated Use UpdateOnboardingStatusResultSchema */
+export const UpdateOnboardingStateResultSchema = UpdateOnboardingStatusResultSchema;
+/** @deprecated Use UpdateOnboardingStatusResult */
+export type UpdateOnboardingStateResult = UpdateOnboardingStatusResult;
 
 /**
  * Result from upsert_services tool
@@ -365,17 +434,17 @@ export const EventPayloadSchemas = {
   ONBOARDING_COMPLETED: z.object({
     completedAt: z.string().datetime(),
     totalDurationMinutes: z.number().int().optional(),
-    phasesCompleted: z.array(OnboardingPhaseSchema),
+    phasesCompleted: z.array(OnboardingStatusSchema),
   }),
   ONBOARDING_SKIPPED: z.object({
     skippedAt: z.string().datetime(),
     reason: z.string().optional(),
-    lastPhase: OnboardingPhaseSchema,
+    lastStatus: OnboardingStatusSchema,
   }),
   PHASE_REVERTED: z.object({
     revertedAt: z.string().datetime(),
-    fromPhase: OnboardingPhaseSchema,
-    toPhase: OnboardingPhaseSchema,
+    fromStatus: OnboardingStatusSchema,
+    toStatus: OnboardingStatusSchema,
     reason: z.string().optional(),
   }),
 } as const;
@@ -421,7 +490,7 @@ export type OnboardingEvent = z.infer<typeof OnboardingEventSchema>;
  */
 export const AdvisorMemorySchema = z.object({
   tenantId: z.string(),
-  currentPhase: OnboardingPhaseSchema,
+  currentStatus: OnboardingStatusSchema,
   lastEventVersion: z.number().int(),
   lastEventTimestamp: z.string().datetime(),
   conversationSummary: z.string().optional(),
@@ -457,3 +526,55 @@ export const OnboardingMachineEventSchema = z.discriminatedUnion('type', [
 ]);
 
 export type OnboardingMachineEvent = z.infer<typeof OnboardingMachineEventSchema>;
+
+// ============================================================================
+// Setup Progress (Phase 6 — Checklist)
+// ============================================================================
+
+export const SetupActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('agent_prompt'), prompt: z.string() }),
+  z.object({ type: z.literal('navigate'), path: z.string() }),
+  z.object({ type: z.literal('modal'), modal: z.string() }),
+]);
+
+export type SetupAction = z.infer<typeof SetupActionSchema>;
+
+export const SetupItemSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  completed: z.boolean(),
+  dismissed: z.boolean(),
+  action: SetupActionSchema,
+  weight: z.number().int().min(1),
+});
+
+export type SetupItem = z.infer<typeof SetupItemSchema>;
+
+export const SetupProgressSchema = z.object({
+  percentage: z.number().int().min(0).max(100),
+  items: z.array(SetupItemSchema),
+});
+
+export type SetupProgress = z.infer<typeof SetupProgressSchema>;
+
+/**
+ * Valid checklist item IDs (must match deriveSetupProgress() in tenant-onboarding.service.ts)
+ */
+export const CHECKLIST_ITEM_IDS = [
+  'review_sections',
+  'upload_photos',
+  'add_testimonials',
+  'add_faq',
+  'add_gallery',
+  'connect_stripe',
+  'set_availability',
+  'publish_website',
+] as const;
+
+export type ChecklistItemId = (typeof CHECKLIST_ITEM_IDS)[number];
+
+export const DismissChecklistItemSchema = z.object({
+  itemId: z.enum(CHECKLIST_ITEM_IDS),
+});
+
+export type DismissChecklistItemInput = z.infer<typeof DismissChecklistItemSchema>;

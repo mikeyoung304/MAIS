@@ -13,8 +13,8 @@
  */
 
 import type { PrismaClient } from '../generated/prisma/client';
-import type { OnboardingPhase } from '@macon/contracts';
-import { parseOnboardingPhase } from '@macon/contracts';
+import type { OnboardingStatus } from '@macon/contracts';
+import { parseOnboardingStatus } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 import type { SectionContentService } from './section-content.service';
 
@@ -145,7 +145,7 @@ export interface AgentContext {
 
   // Onboarding state
   onboardingComplete: boolean;
-  onboardingPhase: OnboardingPhase;
+  onboardingStatus: OnboardingStatus;
 }
 
 /**
@@ -157,7 +157,7 @@ export interface BootstrapData {
   businessName: string;
   slug: string;
   onboardingComplete: boolean;
-  onboardingPhase: OnboardingPhase;
+  onboardingStatus: OnboardingStatus;
   discoveryFacts: KnownFacts;
   brainDump?: string | null;
   city?: string | null;
@@ -199,11 +199,6 @@ export interface BootstrapData {
 // =============================================================================
 // DEFAULT VALUES
 // =============================================================================
-
-// Module-scoped dedup cache for lazy backfill (Pitfall #46)
-// Prevents redundant writes on every request for pre-rebuild tenants
-const recentlyBackfilled = new Set<string>();
-const MAX_BACKFILL_CACHE = 1000;
 
 const DEFAULT_CONSTRAINTS: AgentConstraints = {
   maxTurnsPerSession: 50,
@@ -254,8 +249,7 @@ export class ContextBuilderService {
         name: true, // businessName field doesn't exist - use name
         slug: true,
         branding: true,
-        onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
-        onboardingPhase: true,
+        onboardingStatus: true,
       },
     });
 
@@ -263,8 +257,9 @@ export class ContextBuilderService {
       throw new Error(`Tenant not found: ${tenantId}`);
     }
 
-    // Resolve onboarding phase and trigger lazy backfill
-    const { effectivePhase, onboardingDone } = await this.resolveAndBackfillPhase(tenantId, tenant);
+    // Read onboarding status directly (always set, no null)
+    const status = parseOnboardingStatus(tenant.onboardingStatus);
+    const onboardingDone = status === 'COMPLETE';
 
     // Extract discovery facts from branding (canonical storage)
     const branding = (tenant.branding as Record<string, unknown>) || {};
@@ -325,7 +320,7 @@ export class ContextBuilderService {
 
       forbiddenQuestions,
       onboardingComplete: onboardingDone,
-      onboardingPhase: effectivePhase,
+      onboardingStatus: status,
     };
   }
 
@@ -341,8 +336,7 @@ export class ContextBuilderService {
         name: true, // businessName field doesn't exist - use name
         slug: true,
         branding: true,
-        onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
-        onboardingPhase: true,
+        onboardingStatus: true,
         revealCompletedAt: true,
         brainDump: true,
         city: true,
@@ -385,8 +379,9 @@ export class ContextBuilderService {
     );
     const forbiddenSlots = knownFactKeys as (keyof KnownFacts)[];
 
-    // Resolve onboarding phase and trigger lazy backfill
-    const { effectivePhase, onboardingDone } = await this.resolveAndBackfillPhase(tenantId, tenant);
+    // Read onboarding status directly (always set, no null)
+    const status = parseOnboardingStatus(tenant.onboardingStatus);
+    const onboardingDone = status === 'COMPLETE';
 
     logger.info(
       { tenantId, factCount, forbiddenSlots, completion },
@@ -398,7 +393,7 @@ export class ContextBuilderService {
       businessName: tenant.name || 'Your Business',
       slug: tenant.slug,
       onboardingComplete: onboardingDone,
-      onboardingPhase: effectivePhase,
+      onboardingStatus: status,
       discoveryFacts,
       brainDump: tenant.brainDump ?? null,
       city: tenant.city ?? null,
@@ -418,7 +413,7 @@ export class ContextBuilderService {
    * Get onboarding state for agent context injection
    */
   async getOnboardingState(tenantId: string): Promise<{
-    phase: OnboardingPhase;
+    status: OnboardingStatus;
     isComplete: boolean;
     discoveryFacts: KnownFacts;
     factCount: number;
@@ -428,8 +423,7 @@ export class ContextBuilderService {
       where: { id: tenantId },
       select: {
         branding: true,
-        onboardingCompletedAt: true,
-        onboardingPhase: true,
+        onboardingStatus: true,
         revealCompletedAt: true,
       },
     });
@@ -444,11 +438,12 @@ export class ContextBuilderService {
       (k) => discoveryFacts[k] !== undefined
     ).length;
 
-    // Resolve onboarding phase and trigger lazy backfill
-    const { effectivePhase, onboardingDone } = await this.resolveAndBackfillPhase(tenantId, tenant);
+    // Read onboarding status directly (always set, no null)
+    const status = parseOnboardingStatus(tenant.onboardingStatus);
+    const onboardingDone = status === 'COMPLETE';
 
     return {
-      phase: effectivePhase,
+      status,
       isComplete: onboardingDone,
       discoveryFacts,
       factCount,
@@ -460,56 +455,6 @@ export class ContextBuilderService {
   // ===========================================================================
   // PRIVATE HELPERS
   // ===========================================================================
-
-  /**
-   * Resolve effective phase and trigger lazy backfill.
-   * Extracts repeated 3-line block from build(), getBootstrapData(), getOnboardingState().
-   */
-  private async resolveAndBackfillPhase(
-    tenantId: string,
-    tenant: {
-      onboardingPhase: string | null;
-      onboardingCompletedAt: Date | null;
-    }
-  ): Promise<{ effectivePhase: OnboardingPhase; onboardingDone: boolean }> {
-    const effectivePhase = await this.resolveOnboardingPhase(tenant, () =>
-      this.hasNonSeedTiers(tenantId)
-    );
-    const onboardingDone = effectivePhase === 'COMPLETED' || effectivePhase === 'SKIPPED';
-    this.lazyBackfillPhase(tenantId, effectivePhase, !!tenant.onboardingPhase);
-    return { effectivePhase, onboardingDone };
-  }
-
-  /**
-   * Resolve the effective onboarding phase for a tenant.
-   *
-   * Waterfall logic:
-   * 1. Explicit phase set in database → trust it
-   * 2. onboardingCompletedAt set (old flow) → COMPLETED
-   * 3. Has real content (pre-rebuild tenant) → COMPLETED + lazy-write backfill
-   * 4. Truly new tenant → NOT_STARTED
-   *
-   * @param hasRealContentThunk Lazy thunk that only executes if steps 1 and 2 fail
-   */
-  private async resolveOnboardingPhase(
-    tenant: {
-      onboardingPhase: string | null;
-      onboardingCompletedAt: Date | null;
-    },
-    hasRealContentThunk: () => Promise<boolean>
-  ): Promise<OnboardingPhase> {
-    // 1. Explicit phase → trust it (uses Zod safeParse for type safety)
-    if (tenant.onboardingPhase && tenant.onboardingPhase !== 'NOT_STARTED') {
-      return parseOnboardingPhase(tenant.onboardingPhase);
-    }
-    // 2. Completed via old flow
-    if (tenant.onboardingCompletedAt) return 'COMPLETED';
-    // 3. Has real content (pre-rebuild tenant with real tiers) - LAZY evaluation
-    const hasRealContent = await hasRealContentThunk();
-    if (hasRealContent) return 'COMPLETED';
-    // 4. Truly new tenant
-    return 'NOT_STARTED';
-  }
 
   /**
    * Detect if a tenant has real (non-seed) tiers.
@@ -526,46 +471,6 @@ export class ContextBuilderService {
       where: { tenantId, priceCents: { gt: 0 } },
     });
     return realTierCount > 0;
-  }
-
-  /**
-   * Lazy backfill: set the phase permanently so heuristic becomes a no-op.
-   * Idempotent, non-blocking (fire-and-forget), converts perpetual per-load
-   * cost into a one-time cost per tenant.
-   *
-   * Dedup: Module-scoped Set prevents redundant writes on subsequent requests.
-   * Bounded: Clear entire Set after 1000 entries to avoid unbounded growth.
-   */
-  private lazyBackfillPhase(
-    tenantId: string,
-    effectivePhase: OnboardingPhase,
-    hasExplicitPhase: boolean
-  ): void {
-    if (effectivePhase === 'COMPLETED' && !hasExplicitPhase) {
-      // Skip if already backfilled in this process lifetime
-      if (recentlyBackfilled.has(tenantId)) {
-        return;
-      }
-
-      // Fire-and-forget write
-      this.prisma.tenant
-        .update({
-          where: { id: tenantId },
-          data: { onboardingPhase: 'COMPLETED', onboardingCompletedAt: new Date() },
-        })
-        .then(() => {
-          // Track successful backfill
-          recentlyBackfilled.add(tenantId);
-
-          // Bounded memory: clear entire Set if it grows too large
-          if (recentlyBackfilled.size > MAX_BACKFILL_CACHE) {
-            recentlyBackfilled.clear();
-          }
-        })
-        .catch((err) =>
-          logger.warn({ tenantId, err }, '[ContextBuilder] Lazy backfill failed — non-fatal')
-        );
-    }
   }
 
   /**

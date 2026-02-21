@@ -159,3 +159,13 @@ export { buildFirstDraftTool } from './first-draft.js';
 // missing Google Calendar configuration.
 
 export { checkCalendarAvailabilityTool, blockCalendarDateTool } from './calendar.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Setup Progress Tool (T1) - Onboarding Checklist
+// ─────────────────────────────────────────────────────────────────────────────
+// Returns setup checklist with completion status. Agent uses this to suggest
+// the highest-impact next step during conversation.
+//
+// @see docs/plans/2026-02-20-feat-onboarding-redesign-plan.md (Phase 6)
+
+export { getSetupProgressTool } from './setup-progress.js';

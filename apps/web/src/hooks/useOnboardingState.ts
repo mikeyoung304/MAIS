@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { OnboardingPhase } from '@macon/contracts';
+import type { OnboardingStatus } from '@macon/contracts';
 import { queryKeys } from '@/lib/query-client';
 
 // Unified Tenant Agent API with bootstrap context injection (Pitfall #83 fix)
@@ -11,7 +11,7 @@ const API_PROXY = '/api/tenant-admin/agent/tenant';
  * Onboarding state response from API
  */
 interface OnboardingStateResponse {
-  phase: OnboardingPhase;
+  status: OnboardingStatus;
   isComplete: boolean;
   isReturning: boolean;
   lastActiveAt: string | null;
@@ -25,7 +25,7 @@ interface OnboardingStateResponse {
   };
   resumeMessage: string | null;
   memory: {
-    currentPhase: OnboardingPhase;
+    currentStatus: OnboardingStatus;
     discoveryData: unknown | null;
     marketResearchData: unknown | null;
     servicesData: unknown | null;
@@ -124,13 +124,15 @@ export function useOnboardingState() {
   const state = isUnauthenticatedResult ? null : (data as OnboardingStateResponse | undefined);
 
   // Derived values
-  const isOnboarding = state ? state.phase !== 'COMPLETED' && state.phase !== 'SKIPPED' : false;
-  const currentPhase = state?.phase ?? 'NOT_STARTED';
+  const isOnboarding = state ? state.status !== 'COMPLETE' : false;
+  const currentStatus = state?.status ?? 'PENDING_PAYMENT';
 
   return {
     // State
     state,
-    currentPhase,
+    currentStatus,
+    /** @deprecated Use currentStatus */
+    currentPhase: currentStatus,
     isOnboarding,
     isComplete: state?.isComplete ?? false,
     isReturning: state?.isReturning ?? false,

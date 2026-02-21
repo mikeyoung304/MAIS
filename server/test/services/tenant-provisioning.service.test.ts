@@ -1,14 +1,17 @@
 /**
  * Tenant Provisioning Service Tests
  *
- * Tests atomic tenant creation with segment, tiers, and section content.
- * Ensures that if any part of provisioning fails, the entire
- * transaction rolls back and no partial tenant exists.
+ * Tests:
+ * - createFromSignup: Simplified signup (tenant record only — no defaults)
+ * - createFullyProvisioned: Admin API (tenant + segment + tiers + sections atomically)
+ * - Error handling and rollback behavior
  *
  * NOTE: These are integration tests that require DATABASE_URL to be set.
  * If DATABASE_URL is not set, tests are skipped (valid for CI without DB).
  *
- * @see todos/632-pending-p2-stricter-signup-error-handling.md
+ * Onboarding redesign (2026-02-20): createFromSignup no longer creates
+ * default segments, tiers, or sections. The background build pipeline
+ * creates those after the intake form is completed (Phase 4).
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
@@ -16,20 +19,9 @@ import { TenantProvisioningService } from '../../src/services/tenant-provisionin
 import { TenantProvisioningError } from '../../src/lib/errors';
 import { getTestPrisma } from '../helpers/global-prisma';
 
-/**
- * Skip entire test suite if DATABASE_URL is not configured.
- * This check happens at module evaluation time, before getTestPrisma() is called.
- *
- * Note: Importing getTestPrisma at the top is fine - the error only occurs
- * when getTestPrisma() is CALLED without DATABASE_URL being set.
- */
 const hasDatabaseUrl = !!(process.env.DATABASE_URL || process.env.DATABASE_URL_TEST);
 
 describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
-  // getTestPrisma returns null when no DATABASE_URL - this is safe because
-  // describe.runIf will skip all tests anyway when hasDatabaseUrl is false.
-  // The non-null assertion (!) is safe here because if hasDatabaseUrl is true,
-  // getTestPrisma will return a valid PrismaClient.
   const prisma = getTestPrisma()!;
 
   // Track test emails for cleanup
@@ -74,7 +66,7 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
   });
 
   describe('createFromSignup', () => {
-    it('should create tenant with segment, tiers, and sections atomically', async () => {
+    it('should create tenant record only (no defaults) for simplified onboarding', async () => {
       const email = generateTestEmail();
       const result = await service.createFromSignup({
         slug: `test-biz-${Date.now()}`,
@@ -87,38 +79,20 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
       expect(result.tenant.id).toBeDefined();
       expect(result.tenant.email).toBe(email);
       expect(result.tenant.name).toBe('Test Business');
+      expect(result.tenant.onboardingStatus).toBe('PENDING_PAYMENT');
 
-      // Verify segment created
-      expect(result.segment.id).toBeDefined();
-      expect(result.segment.slug).toBe('general');
-      expect(result.segment.tenantId).toBe(result.tenant.id);
+      // Verify NO defaults created (simplified signup — build pipeline creates later)
+      expect(result.tiers).toHaveLength(0);
+      expect(result.sectionContent).toHaveLength(0);
 
-      // Verify tiers created (sortOrder 1, 2, 3) — Packages are no longer created
-      expect(result.tiers).toHaveLength(3);
-      expect(result.tiers.map((t) => t.sortOrder).sort()).toEqual([1, 2, 3]);
-      expect(result.tiers.every((t) => t.segmentId === result.segment.id)).toBe(true);
-      expect(result.tiers.every((t) => t.tenantId === result.tenant.id)).toBe(true);
-
-      // Verify tier features are arrays (JSON was saved correctly)
-      expect(result.tiers.every((t) => Array.isArray(t.features))).toBe(true);
-
-      // Verify section content created (all 11 block types including FEATURES)
-      expect(result.sectionContent).toHaveLength(11);
-      expect(result.sectionContent.every((s) => s.tenantId === result.tenant.id)).toBe(true);
-      expect(result.sectionContent.every((s) => s.segmentId === null)).toBe(true); // Tenant-level
-
-      // Verify specific sections exist
-      const blockTypes = result.sectionContent.map((s) => s.blockType);
-      expect(blockTypes).toContain('HERO');
-      expect(blockTypes).toContain('ABOUT');
-      expect(blockTypes).toContain('SERVICES');
-      expect(blockTypes).toContain('PRICING');
-      expect(blockTypes).toContain('CONTACT');
-      expect(blockTypes).toContain('FEATURES');
+      // Verify no segment in database for this tenant
+      const segments = await prisma.segment.findMany({
+        where: { tenantId: result.tenant.id },
+      });
+      expect(segments).toHaveLength(0);
     });
 
     it('should throw TenantProvisioningError on failure', async () => {
-      // Create a mock Prisma client that fails during transaction
       const mockPrisma = {
         $transaction: vi.fn().mockRejectedValue(new Error('Database constraint violation')),
       } as unknown as typeof prisma;
@@ -161,52 +135,6 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
           'Failed to complete signup. Please try again.'
         );
       }
-    });
-
-    it('should not leave partial tenant data when segment creation fails', async () => {
-      const email = generateTestEmail();
-      const slug = `partial-test-${Date.now()}`;
-
-      // Create a mock that succeeds for tenant.create but fails for segment.create
-      const mockPrisma = {
-        $transaction: vi
-          .fn()
-          .mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => {
-            // Simulate transaction that throws after tenant creation
-            // In a real transaction, this would be rolled back
-            const mockTx = {
-              tenant: {
-                create: vi.fn().mockResolvedValue({
-                  id: 'mock-tenant-id',
-                  slug,
-                  email,
-                  name: 'Partial Test',
-                }),
-              },
-              segment: {
-                create: vi.fn().mockRejectedValue(new Error('Segment creation failed')),
-              },
-            };
-            return callback(mockTx);
-          }),
-      } as unknown as typeof prisma;
-
-      const failingService = new TenantProvisioningService(mockPrisma);
-
-      await expect(
-        failingService.createFromSignup({
-          slug,
-          businessName: 'Partial Test',
-          email,
-          passwordHash: '$2b$10$test.hash',
-        })
-      ).rejects.toThrow(TenantProvisioningError);
-
-      // Verify no tenant was created (transaction rolled back)
-      const tenant = await prisma.tenant.findFirst({
-        where: { email },
-      });
-      expect(tenant).toBeNull();
     });
 
     it('should have proper error code for HTTP error handler', async () => {

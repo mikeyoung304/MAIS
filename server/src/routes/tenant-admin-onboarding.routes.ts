@@ -1,0 +1,547 @@
+/**
+ * Tenant Admin Onboarding Routes
+ *
+ * Handles onboarding flow endpoints:
+ * - POST /create-checkout — Create Stripe Checkout session for membership payment
+ * - GET /state — Get current onboarding state (used by frontend to determine redirect)
+ * - POST /intake/answer — Save a single intake answer (chat-style form)
+ * - GET /intake/progress — Get current intake progress
+ * - POST /intake/complete — Finalize intake, advance to BUILDING + trigger build
+ * - GET /build-status — Poll build progress (Phase 4)
+ * - POST /build/retry — Retry a failed build (Phase 4)
+ *
+ * Mounted at: /v1/tenant-admin/onboarding
+ * Protected by: tenantAuthMiddleware (JWT required)
+ */
+
+import { Router, type Request, type Response, type NextFunction } from 'express';
+import Stripe from 'stripe';
+import type { Config } from '../lib/core/config';
+import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
+import { logger } from '../lib/core/logger';
+import { ValidationError } from '../lib/errors';
+import type { OnboardingIntakeService } from '../services/onboarding-intake.service';
+import { IntakeValidationError } from '../services/onboarding-intake.service';
+import type { BackgroundBuildService } from '../services/background-build.service';
+import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
+import { buildRetryLimiter } from '../middleware/rateLimiter';
+import {
+  IntakeAnswerRequestSchema,
+  DismissChecklistItemSchema,
+  type OnboardingStatus,
+  parseOnboardingStatus,
+} from '@macon/contracts';
+
+interface OnboardingRoutesOptions {
+  config: Config;
+  tenantRepo: PrismaTenantRepository;
+  intakeService?: OnboardingIntakeService;
+  buildService?: BackgroundBuildService;
+  onboardingService?: TenantOnboardingService;
+}
+
+export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptions): Router {
+  const { config, tenantRepo, intakeService, buildService, onboardingService } = options;
+  const router = Router();
+
+  // Create Stripe instance once at factory level (not per-request — 11093)
+  const stripe = config.STRIPE_SECRET_KEY
+    ? new Stripe(config.STRIPE_SECRET_KEY, {
+        apiVersion: '2025-10-29.clover',
+        typescript: true,
+      })
+    : null;
+
+  /**
+   * POST /create-checkout
+   *
+   * Creates a Stripe Checkout session for the membership subscription payment.
+   * Redirects user to Stripe-hosted payment page.
+   *
+   * Flow: Signup → Payment (this endpoint) → Stripe Checkout → Webhook → Intake Form
+   *
+   * Security:
+   * - JWT required (tenantAuthMiddleware)
+   * - Tenant must be in PENDING_PAYMENT status
+   * - Dynamic URLs per tenant (institutional learning: multi-tenant-stripe-checkout-url-routing)
+   * - Idempotency via Stripe Checkout session (naturally idempotent)
+   */
+  router.post('/create-checkout', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      // Verify tenant exists and is in correct status
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        throw new ValidationError('Tenant not found');
+      }
+
+      if (tenant.onboardingStatus !== 'PENDING_PAYMENT') {
+        res.status(400).json({
+          error: 'invalid_status',
+          message: 'Payment already completed or not required',
+          currentStatus: tenant.onboardingStatus,
+        });
+        return;
+      }
+
+      // Validate Stripe configuration
+      if (!stripe) {
+        logger.error({ tenantId }, 'STRIPE_SECRET_KEY not configured');
+        res.status(503).json({
+          error: 'payment_unavailable',
+          message: 'Payment processing is temporarily unavailable',
+        });
+        return;
+      }
+
+      if (!config.STRIPE_MEMBERSHIP_PRICE_ID) {
+        logger.error({ tenantId }, 'STRIPE_MEMBERSHIP_PRICE_ID not configured');
+        res.status(503).json({
+          error: 'payment_unavailable',
+          message: 'Payment processing is temporarily unavailable',
+        });
+        return;
+      }
+
+      // Build dynamic URLs per tenant (prevents all tenants redirecting to same URL)
+      const appUrl = config.NEXTJS_APP_URL || config.CLIENT_URL || 'http://localhost:3000';
+      const successUrl = `${appUrl}/onboarding/intake?session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = `${appUrl}/onboarding/payment?cancelled=true`;
+
+      // Create Stripe Checkout session for subscription
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        customer_email: tenant.email || undefined,
+        line_items: [
+          {
+            price: config.STRIPE_MEMBERSHIP_PRICE_ID,
+            quantity: 1,
+          },
+        ],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: {
+          tenantId: tenant.id,
+          checkoutType: 'membership',
+        },
+        subscription_data: {
+          metadata: {
+            tenantId: tenant.id,
+          },
+        },
+      });
+
+      logger.info(
+        {
+          tenantId,
+          sessionId: session.id,
+          event: 'checkout_session_created',
+        },
+        'Created Stripe Checkout session for membership payment'
+      );
+
+      res.status(200).json({
+        checkoutUrl: session.url,
+        sessionId: session.id,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * GET /state
+   *
+   * Returns the current onboarding status for redirect logic.
+   * Used by frontend to determine which onboarding step to show.
+   */
+  router.get('/state', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      res.status(200).json({
+        status: tenant.onboardingStatus,
+        buildStatus: tenant.buildStatus,
+        redirectTo: getRedirectForStatus(parseOnboardingStatus(tenant.onboardingStatus)),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ==========================================================================
+  // Intake Form Routes (Phase 3 — Conversational Intake)
+  // ==========================================================================
+
+  /**
+   * POST /intake/answer
+   *
+   * Saves a single intake answer. Validates per-question, sanitizes, stores as discovery fact.
+   *
+   * Request body: { questionId: string, answer: string | string[] }
+   * Response: { stored: true, questionId, nextQuestionId, answeredCount, totalQuestions }
+   *
+   * Requires: PENDING_INTAKE status, intakeService configured
+   */
+  router.post('/intake/answer', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      if (!intakeService) {
+        res.status(503).json({ error: 'Intake service not configured' });
+        return;
+      }
+
+      // Verify tenant is in PENDING_INTAKE status
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      if (tenant.onboardingStatus !== 'PENDING_INTAKE') {
+        res.status(400).json({
+          error: 'invalid_status',
+          message: 'Tenant is not in intake phase',
+          currentStatus: tenant.onboardingStatus,
+        });
+        return;
+      }
+
+      // Parse and validate request body
+      const bodyValidation = IntakeAnswerRequestSchema.safeParse(req.body);
+      if (!bodyValidation.success) {
+        res.status(400).json({
+          error: 'validation_error',
+          message: 'Invalid request body',
+          details: bodyValidation.error.issues,
+        });
+        return;
+      }
+
+      const { questionId, answer } = bodyValidation.data;
+
+      const result = await intakeService.saveAnswer(tenantId, questionId, answer);
+
+      logger.info({ tenantId, questionId, event: 'intake_answer_saved' }, 'Intake answer saved');
+
+      res.status(200).json(result);
+    } catch (error) {
+      if (error instanceof IntakeValidationError) {
+        res.status(400).json({
+          error: 'validation_error',
+          message: error.message,
+          details: error.issues,
+        });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * GET /intake/progress
+   *
+   * Returns current intake progress: answered questions, next question, can-complete flag.
+   *
+   * Response: { answers, answeredQuestionIds, nextQuestionId, totalQuestions, completedCount, canComplete }
+   *
+   * Requires: PENDING_INTAKE status, intakeService configured
+   */
+  router.get('/intake/progress', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      if (!intakeService) {
+        res.status(503).json({ error: 'Intake service not configured' });
+        return;
+      }
+
+      // Verify tenant is in PENDING_INTAKE status
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      if (tenant.onboardingStatus !== 'PENDING_INTAKE') {
+        res.status(400).json({
+          error: 'invalid_status',
+          message: 'Tenant is not in intake phase',
+          currentStatus: tenant.onboardingStatus,
+        });
+        return;
+      }
+
+      const result = await intakeService.getProgress(tenantId);
+
+      logger.info(
+        { tenantId, event: 'intake_progress_fetched', completedCount: result.completedCount },
+        'Intake progress fetched'
+      );
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * POST /intake/complete
+   *
+   * Finalizes intake form. Validates all required questions answered, advances to BUILDING.
+   *
+   * Response: discriminated union — { status: 'advanced_to_building' | 'missing_required' | 'already_completed', ... }
+   *
+   * Requires: PENDING_INTAKE status, intakeService configured
+   */
+  router.post('/intake/complete', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      if (!intakeService) {
+        res.status(503).json({ error: 'Intake service not configured' });
+        return;
+      }
+
+      const result = await intakeService.completeIntake(tenantId);
+
+      const logEvent =
+        result.status === 'advanced_to_building'
+          ? 'intake_completed'
+          : result.status === 'missing_required'
+            ? 'intake_completion_blocked'
+            : 'intake_already_completed';
+
+      logger.info(
+        { tenantId, event: logEvent, result: result.status },
+        `Intake completion: ${result.status}`
+      );
+
+      // Map status to HTTP status codes
+      if (result.status === 'missing_required') {
+        res.status(400).json(result);
+        return;
+      }
+
+      // Trigger background build pipeline (Phase 4)
+      // Fire-and-forget: runs async, frontend polls /build-status
+      if (result.status === 'advanced_to_building' && buildService) {
+        buildService.triggerBuild(tenantId).catch((error) => {
+          logger.error(
+            { tenantId, error: error instanceof Error ? error.message : String(error) },
+            'Failed to trigger background build'
+          );
+        });
+      }
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ==========================================================================
+  // Build Pipeline Routes (Phase 4 — Background Build)
+  // ==========================================================================
+
+  /**
+   * GET /build-status
+   *
+   * Returns current build status with per-section progress.
+   * Frontend polls this every 2s during BUILDING state.
+   *
+   * Response: { buildStatus, buildError, sections: { hero, about, services } }
+   *
+   * Requires: BUILDING or later status, buildService configured
+   */
+  router.get('/build-status', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      if (!buildService) {
+        res.status(503).json({ error: 'Build service not configured' });
+        return;
+      }
+
+      const result = await buildService.getBuildStatus(tenantId);
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * POST /build/retry
+   *
+   * Retries a failed or stuck build.
+   * Rate limited: 3 retries per hour per tenant (11075).
+   * Max 5 total retries tracked in buildRetryCount.
+   *
+   * Response: { triggered: boolean, error?: string }
+   *
+   * Requires: buildService configured, buildStatus in retryable state
+   */
+  router.post(
+    '/build/retry',
+    buildRetryLimiter,
+    async (_req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const { tenantId } = tenantAuth;
+
+        if (!buildService) {
+          res.status(503).json({ error: 'Build service not configured' });
+          return;
+        }
+
+        const result = await buildService.retryBuild(tenantId);
+
+        if (!result.triggered && result.error) {
+          logger.info(
+            { tenantId, error: result.error, event: 'build_retry_rejected' },
+            'Build retry rejected'
+          );
+          res.status(400).json(result);
+          return;
+        }
+
+        logger.info(
+          { tenantId, triggered: result.triggered, event: 'build_retry' },
+          `Build retry: ${result.triggered ? 'triggered' : 'skipped'}`
+        );
+
+        res.status(200).json(result);
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  // ==========================================================================
+  // Setup Progress Routes (Phase 6 — Checklist)
+  // ==========================================================================
+
+  /**
+   * GET /setup-progress
+   *
+   * Returns derived setup progress with 8 checklist items.
+   * Used by dashboard SetupChecklist component and agent tool.
+   *
+   * Requires: onboardingStatus in ['SETUP', 'COMPLETE']
+   */
+  router.get('/setup-progress', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!onboardingService) {
+        res.status(503).json({ error: 'Onboarding service unavailable' });
+        return;
+      }
+
+      const progress = await onboardingService.deriveSetupProgress(tenantAuth.tenantId);
+      res.json(progress);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * POST /dismiss-item
+   *
+   * Dismisses a checklist item. Idempotent.
+   * Body: { itemId: string }
+   */
+  router.post('/dismiss-item', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!onboardingService) {
+        res.status(503).json({ error: 'Onboarding service unavailable' });
+        return;
+      }
+
+      const parsed = DismissChecklistItemSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: 'Invalid request', details: parsed.error.issues });
+        return;
+      }
+
+      await onboardingService.dismissChecklistItem(tenantAuth.tenantId, parsed.data.itemId);
+      res.json({ dismissed: true });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  return router;
+}
+
+/**
+ * Get the redirect path for a given onboarding status.
+ * Typed as OnboardingStatus for exhaustiveness checking.
+ */
+function getRedirectForStatus(status: OnboardingStatus): string {
+  switch (status) {
+    case 'PENDING_PAYMENT':
+      return '/onboarding/payment';
+    case 'PENDING_INTAKE':
+      return '/onboarding/intake';
+    case 'BUILDING':
+      return '/onboarding/build';
+    case 'SETUP':
+      return '/tenant/dashboard';
+    case 'COMPLETE':
+      return '/tenant/dashboard';
+  }
+}

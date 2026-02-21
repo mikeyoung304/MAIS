@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, loginWithToken } from '@/lib/auth-client';
 import { HandledLogo } from '@/components/ui/handled-logo';
@@ -11,16 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   AlertCircle,
   Loader2,
-  Building2,
   Mail,
   Lock,
   Eye,
@@ -28,137 +20,25 @@ import {
   Sparkles,
   Check,
   ArrowRight,
-  MapPin,
 } from 'lucide-react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 // =============================================================================
-// Type-Safe Tier Content System
-// =============================================================================
-
-const SIGNUP_TIERS = ['handled', 'fully-handled'] as const;
-type SignupTier = (typeof SIGNUP_TIERS)[number];
-
-function isValidTier(tier: string | null): tier is SignupTier {
-  return tier !== null && tier !== '' && (SIGNUP_TIERS as readonly string[]).includes(tier);
-}
-
-interface TierContent {
-  title: string;
-  subtitle: string;
-  cta: string;
-  loadingCta: string;
-}
-
-const TIER_CONTENT: Record<SignupTier | 'default', TierContent> = {
-  handled: {
-    title: "Let's build your storefront.",
-    subtitle: 'Done-for-you website + booking. Try free for 14 days.',
-    cta: 'Start my storefront',
-    loadingCta: 'Setting up your storefront...',
-  },
-  'fully-handled': {
-    title: "Let's get you more clients.",
-    subtitle: 'AI chatbot + auto-responder. One booking pays for itself.',
-    cta: 'Start growing',
-    loadingCta: 'Preparing your growth system...',
-  },
-  default: {
-    title: 'Bring your passion.',
-    subtitle: 'The rest is handled. Try free for 14 days.',
-    cta: 'Get Handled',
-    loadingCta: 'Setting up your storefront...',
-  },
-};
-
-function getTierContent(tier: string | null): TierContent {
-  if (isValidTier(tier)) {
-    return TIER_CONTENT[tier];
-  }
-  return TIER_CONTENT.default;
-}
-
-const BRAIN_DUMP_MAX = 2000;
-
-const US_STATES = [
-  'AL',
-  'AK',
-  'AZ',
-  'AR',
-  'CA',
-  'CO',
-  'CT',
-  'DE',
-  'FL',
-  'GA',
-  'HI',
-  'ID',
-  'IL',
-  'IN',
-  'IA',
-  'KS',
-  'KY',
-  'LA',
-  'ME',
-  'MD',
-  'MA',
-  'MI',
-  'MN',
-  'MS',
-  'MO',
-  'MT',
-  'NE',
-  'NV',
-  'NH',
-  'NJ',
-  'NM',
-  'NY',
-  'NC',
-  'ND',
-  'OH',
-  'OK',
-  'OR',
-  'PA',
-  'RI',
-  'SC',
-  'SD',
-  'TN',
-  'TX',
-  'UT',
-  'VT',
-  'VA',
-  'WA',
-  'WV',
-  'WI',
-  'WY',
-  'DC',
-  'Other',
-] as const;
-
-// =============================================================================
-// Signup Form Component
+// Signup Form Component (Simplified — email + password only)
 // =============================================================================
 
 /**
  * Signup Form Component
  *
- * Handles tenant registration with tier-aware copy, validation, and error handling.
- * Uses NextAuth.js for session management after signup.
+ * Onboarding redesign (2026-02-20): Only email + password at signup.
+ * Business details collected later during the conversational intake form.
+ * After signup, redirects to /onboarding/payment for Stripe checkout.
  */
 function SignupForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { isAuthenticated, role, isLoading: sessionLoading } = useAuth();
 
-  // Get tier from URL params for tier-aware content
-  const rawTier = searchParams.get('tier');
-  const content = getTierContent(rawTier);
-
-  const [businessName, setBusinessName] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [brainDump, setBrainDump] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -166,54 +46,31 @@ function SignupForm() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // TODO: Phase 0 - Add analytics tracking
-  // useEffect(() => {
-  //   trackEvent('signup_page_view', { tier: rawTier || 'none' });
-  // }, [rawTier]);
-
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && role && !sessionLoading) {
       if (role === 'PLATFORM_ADMIN') {
         router.push('/admin/dashboard');
       } else if (role === 'TENANT_ADMIN') {
-        router.push('/tenant/build');
+        // Authenticated tenants go to onboarding state check
+        router.push('/onboarding/payment');
       }
     }
   }, [isAuthenticated, role, sessionLoading, router]);
 
-  /**
-   * Validate form before submission
-   */
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    // Business name validation
-    if (!businessName) {
-      errors.businessName = 'Business name is required';
-    } else if (businessName.length < 2) {
-      errors.businessName = 'Business name must be at least 2 characters';
-    } else if (businessName.length > 100) {
-      errors.businessName = 'Business name must be less than 100 characters';
-    }
-
-    // Email validation
     if (!email) {
       errors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = 'Please enter a valid email address';
     }
 
-    // Password validation
     if (!password) {
       errors.password = 'Password is required';
     } else if (password.length < 8) {
       errors.password = 'Password must be at least 8 characters';
-    }
-
-    // Brain dump validation (optional, but enforce max length)
-    if (brainDump.length > BRAIN_DUMP_MAX) {
-      errors.brainDump = `Must be ${BRAIN_DUMP_MAX} characters or less`;
     }
 
     setFieldErrors(errors);
@@ -224,9 +81,6 @@ function SignupForm() {
     e.preventDefault();
     setError(null);
 
-    // TODO: Phase 0 - Track submit attempt
-    // trackEvent('signup_submit_attempt', { tier: rawTier || 'none' });
-
     if (!validateForm()) {
       return;
     }
@@ -234,23 +88,12 @@ function SignupForm() {
     setIsLoading(true);
 
     try {
-      // Use raw fetch() instead of ts-rest client because:
-      // 1. The signup endpoint is public (no authentication required)
-      // 2. It doesn't follow the authenticated ts-rest contract pattern
-      // 3. The response includes a JWT token for immediate session creation
       const response = await fetch(`${API_BASE_URL}/v1/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email,
-          password,
-          businessName,
-          ...(city && { city }),
-          ...(state && { state }),
-          ...(brainDump && { brainDump }),
-        }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -259,9 +102,6 @@ function SignupForm() {
       }
 
       const data = await response.json();
-
-      // TODO: Phase 0 - Track success
-      // trackEvent('signup_success', { tier: rawTier || 'none', tenantId: data.tenantId });
 
       // Create NextAuth session with the token from signup
       await loginWithToken({
@@ -272,9 +112,8 @@ function SignupForm() {
         slug: data.slug,
       });
 
-      // Use window.location for hard redirect to Build Mode
-      // This ensures clean navigation after session creation
-      window.location.href = '/tenant/build';
+      // Redirect to payment step (first step of onboarding)
+      window.location.href = '/onboarding/payment';
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -285,8 +124,6 @@ function SignupForm() {
     }
   };
 
-  // Light inputs on dark card - maximum contrast, premium feel
-  // Uses default Input component styles (bg-white) with sage focus ring
   const inputStyles =
     'bg-white border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-sage focus:ring-2 focus:ring-sage/30 focus:outline-none hover:border-neutral-300 transition-all duration-200';
   const inputErrorStyles = 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20';
@@ -298,7 +135,7 @@ function SignupForm() {
         <HandledLogo variant="dark" size="lg" href="/" />
       </div>
 
-      {/* Trial Badge - with border for pop */}
+      {/* Trial Badge */}
       <div className="flex justify-center mb-6">
         <div className="inline-flex items-center gap-2 bg-sage/15 text-sage text-sm font-medium px-4 py-2 rounded-full border border-sage/30">
           <Sparkles className="w-4 h-4" aria-hidden="true" />
@@ -306,18 +143,19 @@ function SignupForm() {
         </div>
       </div>
 
-      {/* Tier Title - PRIMARY hierarchy, OUTSIDE card */}
+      {/* Headline */}
       <h1
         id="signup-heading"
         className="font-serif text-3xl sm:text-4xl font-bold text-text-primary text-center mb-3 leading-[1.15]"
       >
-        {content.title}
+        Bring your passion.
       </h1>
 
-      {/* Tier Subtitle - SECONDARY hierarchy */}
-      <p className="text-text-muted text-center mb-8 leading-relaxed">{content.subtitle}</p>
+      <p className="text-text-muted text-center mb-8 leading-relaxed">
+        The rest is handled. Try free for 14 days.
+      </p>
 
-      {/* Card - Form only, reduced header */}
+      {/* Card */}
       <Card className="bg-surface-alt border border-neutral-800 rounded-3xl">
         <CardContent className="pt-6">
           <form
@@ -326,7 +164,6 @@ function SignupForm() {
             aria-labelledby="signup-heading"
             aria-busy={isLoading}
           >
-            {/* Screen reader loading announcement */}
             {isLoading && (
               <span className="sr-only" aria-live="polite">
                 Creating your account, please wait.
@@ -339,124 +176,6 @@ function SignupForm() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-
-            {/* Business Name */}
-            <div className="space-y-2">
-              <Label htmlFor="businessName" className="text-text-primary">
-                Business Name
-              </Label>
-              <div className="relative">
-                <Building2
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
-                  aria-hidden="true"
-                />
-                <Input
-                  id="businessName"
-                  type="text"
-                  placeholder="Your Business Name"
-                  value={businessName}
-                  onChange={(e) => {
-                    setBusinessName(e.target.value);
-                    if (fieldErrors.businessName) {
-                      setFieldErrors((prev) => ({ ...prev, businessName: '' }));
-                    }
-                  }}
-                  className={`pl-10 ${inputStyles} ${fieldErrors.businessName ? inputErrorStyles : ''}`}
-                  required
-                  autoComplete="organization"
-                  disabled={isLoading}
-                  maxLength={100}
-                  aria-invalid={!!fieldErrors.businessName}
-                  aria-describedby={fieldErrors.businessName ? 'businessName-error' : undefined}
-                />
-              </div>
-              {fieldErrors.businessName && (
-                <p id="businessName-error" className="text-sm text-danger-500" role="alert">
-                  {fieldErrors.businessName}
-                </p>
-              )}
-            </div>
-
-            {/* City + State (side by side) */}
-            <div className="flex gap-3">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="city" className="text-text-primary">
-                  City
-                </Label>
-                <div className="relative">
-                  <MapPin
-                    className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
-                    aria-hidden="true"
-                  />
-                  <Input
-                    id="city"
-                    type="text"
-                    placeholder="Austin"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className={`pl-10 ${inputStyles}`}
-                    autoComplete="address-level2"
-                    disabled={isLoading}
-                    maxLength={100}
-                  />
-                </div>
-              </div>
-              <div className="w-28 space-y-2">
-                <Label htmlFor="state" className="text-text-primary">
-                  State
-                </Label>
-                <Select value={state} onValueChange={setState} disabled={isLoading}>
-                  <SelectTrigger id="state" className={`${inputStyles} h-11`}>
-                    <SelectValue placeholder="--" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {US_STATES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Brain Dump */}
-            <div className="space-y-2">
-              <Label htmlFor="brainDump" className="text-text-primary">
-                Tell us about your business
-              </Label>
-              <textarea
-                id="brainDump"
-                placeholder="Who are you? What do you do, and who do you do it for? The more you share, the better we can help."
-                value={brainDump}
-                onChange={(e) => {
-                  setBrainDump(e.target.value);
-                  if (fieldErrors.brainDump) {
-                    setFieldErrors((prev) => ({ ...prev, brainDump: '' }));
-                  }
-                }}
-                rows={3}
-                maxLength={BRAIN_DUMP_MAX}
-                className={`w-full rounded-xl border px-4 py-3 text-sm resize-none ${inputStyles} ${fieldErrors.brainDump ? inputErrorStyles : ''}`}
-                disabled={isLoading}
-                aria-invalid={!!fieldErrors.brainDump}
-                aria-describedby={fieldErrors.brainDump ? 'brainDump-error' : 'brainDump-hint'}
-              />
-              <div className="flex justify-between items-center">
-                {fieldErrors.brainDump ? (
-                  <p id="brainDump-error" className="text-sm text-danger-500" role="alert">
-                    {fieldErrors.brainDump}
-                  </p>
-                ) : (
-                  <p id="brainDump-hint" className="text-xs text-text-muted">
-                    Optional — helps our AI tailor your storefront
-                  </p>
-                )}
-                <span className="text-xs text-text-muted">
-                  {brainDump.length}/{BRAIN_DUMP_MAX}
-                </span>
-              </div>
-            </div>
 
             {/* Email */}
             <div className="space-y-2">
@@ -494,7 +213,7 @@ function SignupForm() {
               )}
             </div>
 
-            {/* Password with inline validation hint */}
+            {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-text-primary">
                 Password
@@ -522,7 +241,6 @@ function SignupForm() {
                   aria-invalid={!!fieldErrors.password}
                   aria-describedby={fieldErrors.password ? 'password-error' : 'password-hint'}
                 />
-                {/* Password toggle with 44px touch target - uses pr-1 to keep within input bounds */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -536,7 +254,6 @@ function SignupForm() {
                   )}
                 </button>
               </div>
-              {/* Inline validation hint */}
               {!fieldErrors.password && (
                 <p id="password-hint" className="text-xs text-text-muted flex items-center gap-1">
                   {password.length >= 8 ? (
@@ -556,7 +273,7 @@ function SignupForm() {
               )}
             </div>
 
-            {/* CTA Button with ArrowRight */}
+            {/* CTA */}
             <Button
               type="submit"
               variant="sage"
@@ -566,19 +283,18 @@ function SignupForm() {
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-                  {content.loadingCta}
+                  Setting up your account...
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
-                  {content.cta}
+                  Get Handled
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </span>
               )}
             </Button>
 
-            {/* What's next copy */}
             <p className="text-sm text-text-muted text-center mt-4">
-              You&apos;ll set up your storefront next. Takes about 5 minutes.
+              Two minutes to sign up. We&apos;ll handle the rest.
             </p>
           </form>
 
@@ -609,37 +325,26 @@ function SignupForm() {
 // Loading Skeleton
 // =============================================================================
 
-/**
- * Loading fallback for signup form - dark mode compatible
- */
 function SignupFormSkeleton() {
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Logo skeleton */}
       <div className="mb-8 text-center">
         <div className="h-9 w-32 mx-auto animate-pulse rounded bg-neutral-700" />
       </div>
-
-      {/* Badge skeleton */}
       <div className="flex justify-center mb-6">
         <div className="h-9 w-52 animate-pulse rounded-full bg-neutral-700" />
       </div>
-
-      {/* Title + subtitle skeleton */}
       <div className="text-center mb-8">
         <div className="h-10 w-64 mx-auto animate-pulse rounded bg-neutral-700 mb-3" />
         <div className="h-5 w-80 mx-auto animate-pulse rounded bg-neutral-700" />
       </div>
-
-      {/* Card skeleton */}
       <div className="bg-surface-alt border border-neutral-800 rounded-3xl p-6">
         <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
+          {[1, 2].map((i) => (
             <div key={i} className="space-y-2">
               <div className="h-4 w-24 animate-pulse rounded bg-neutral-700" />
               <div className="h-12 animate-pulse rounded-lg bg-neutral-700" />
-              {/* Password hint skeleton - reserves space to prevent CLS */}
-              {i === 3 && <div className="h-4 w-28 animate-pulse rounded bg-neutral-700" />}
+              {i === 2 && <div className="h-4 w-28 animate-pulse rounded bg-neutral-700" />}
             </div>
           ))}
           <div className="h-12 animate-pulse rounded-full bg-sage/30 mt-6" />
@@ -653,12 +358,6 @@ function SignupFormSkeleton() {
 // Page Component
 // =============================================================================
 
-/**
- * Signup Page
- *
- * Allows new businesses to sign up for the HANDLED platform.
- * Supports tier-aware content via ?tier=handled or ?tier=fully-handled URL params.
- */
 export default function SignupPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4">

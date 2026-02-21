@@ -1,13 +1,14 @@
 /**
  * Auth Signup Routes
- * POST /signup — Self-service tenant signup
+ * POST /signup — Self-service tenant signup (simplified: email + password only)
  *
- * Extracted from auth.routes.ts (mechanical refactor, no logic changes)
+ * Onboarding redesign (2026-02-20): Signup collects only email + password.
+ * Business details are collected later during the conversational intake form.
+ * After signup, tenant is redirected to payment → intake → build flow.
  */
 
 import type { Router, Request, Response, NextFunction } from 'express';
 import type { UnifiedAuthRoutesOptions } from './auth-shared';
-import validator from 'validator';
 import { signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { ConflictError, ValidationError, TenantProvisioningError } from '../lib/errors';
@@ -19,35 +20,36 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
 
   /**
    * POST /signup
-   * Self-service tenant signup
-   * Creates new tenant with API keys and returns JWT token
+   * Self-service tenant signup (simplified)
+   *
+   * Only requires email + password. Business name is optional (collected during intake).
+   * Creates tenant with PENDING_PAYMENT status. No default segments/tiers/sections
+   * are created — the background build pipeline creates those after intake.
    *
    * Request body:
    * {
    *   "email": "owner@business.com",
    *   "password": "securepass123",
-   *   "businessName": "My Business"
+   *   "businessName": "My Business" // optional — collected during intake if not provided
    * }
    *
    * Response:
    * {
    *   "token": "eyJhbGc...",
    *   "tenantId": "tenant_123",
-   *   "slug": "my-business-1234567890",
-   *   "email": "owner@business.com",
-   *   "apiKeyPublic": "pk_live_...",
-   *   "secretKey": "sk_live_..." // Shown ONCE, never stored in plaintext
+   *   "slug": "owner-1234567890",
+   *   "email": "owner@business.com"
    * }
    */
   router.post('/signup', signupLimiter, async (req: Request, res: Response, next: NextFunction) => {
     const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
 
     try {
-      const { email, password, businessName, city, state, brainDump } = req.body;
+      const { email, password, businessName } = req.body;
 
-      // Validate required fields
-      if (!email || !password || !businessName) {
-        throw new ValidationError('Email, password, and business name are required');
+      // Validate required fields (only email + password now)
+      if (!email || !password) {
+        throw new ValidationError('Email and password are required');
       }
 
       // Validate email format
@@ -56,19 +58,17 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
         throw new ValidationError('Invalid email format');
       }
 
-      // Validate password length
+      // Validate password length (max 128 prevents bcrypt DoS — bcrypt truncates at 72 bytes anyway)
       if (password.length < 8) {
         throw new ValidationError('Password must be at least 8 characters');
       }
-
-      // Validate business name
-      if (businessName.length < 2 || businessName.length > 100) {
-        throw new ValidationError('Business name must be between 2 and 100 characters');
+      if (password.length > 128) {
+        throw new ValidationError('Password must be at most 128 characters');
       }
 
-      // Validate optional fields
-      if (brainDump && typeof brainDump === 'string' && brainDump.length > 2000) {
-        throw new ValidationError('Brain dump must be 2000 characters or less');
+      // Validate optional business name
+      if (businessName && (businessName.length < 2 || businessName.length > 100)) {
+        throw new ValidationError('Business name must be between 2 and 100 characters');
       }
 
       const normalizedEmail = email.toLowerCase().trim();
@@ -79,15 +79,11 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
         throw new ConflictError('Email already registered');
       }
 
-      // Undo global sanitize middleware's HTML encoding for business names
-      // (React auto-escapes on output, making server-side escaping redundant and harmful)
-      // e.g. "Ember &amp; Ash Photography" → "Ember & Ash Photography"
-      const cleanBusinessName = validator.unescape(businessName);
-
-      // Generate unique slug from clean business name with timestamp
-      const baseSlug = cleanBusinessName
+      // Derive display name and slug from businessName (if provided) or email prefix
+      const displayName = businessName?.trim() || normalizedEmail.split('@')[0];
+      const baseSlug = displayName
         .toLowerCase()
-        .replace(/&/g, 'and') // & → and (human-readable)
+        .replace(/&/g, 'and')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
         .slice(0, 50);
@@ -102,29 +98,16 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
       // Hash password
       const passwordHash = await tenantAuthService.hashPassword(password);
 
-      // =========================================================================
-      // ATOMIC TENANT PROVISIONING (#632)
-      // =========================================================================
-      // Uses TenantProvisioningService for atomic creation of:
-      // - Tenant record with API keys
-      // - Default "General" segment
-      // - Default packages (Basic/Standard/Premium)
-      //
-      // If any part fails, the entire transaction rolls back.
-      // No more orphaned tenants without segments!
-      // =========================================================================
       if (!tenantProvisioningService) {
         throw new Error('Tenant provisioning service not configured');
       }
 
+      // Simplified provisioning: no defaults (segments/tiers/sections created by build pipeline)
       const provisionedTenant = await tenantProvisioningService.createFromSignup({
         slug,
-        businessName: cleanBusinessName,
+        businessName: displayName,
         email: normalizedEmail,
         passwordHash,
-        city: typeof city === 'string' ? city.trim() : undefined,
-        state: typeof state === 'string' ? state.trim() : undefined,
-        brainDump: typeof brainDump === 'string' ? brainDump.trim() : undefined,
       });
 
       const { tenant } = provisionedTenant;
@@ -143,10 +126,10 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
           ipAddress,
           timestamp: new Date().toISOString(),
         },
-        'New tenant signup (atomic provisioning)'
+        'New tenant signup (simplified onboarding)'
       );
 
-      // Send admin notification - best effort, don't fail signup if email fails
+      // Send admin notification - best effort
       if (mailProvider) {
         try {
           const adminEmail = config.adminNotificationEmail || 'mike@maconheadshots.com';
@@ -162,7 +145,7 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
 
           await mailProvider.sendEmail({
             to: adminEmail,
-            subject: `New Signup: ${businessName}`,
+            subject: `New Signup: ${sanitizePlainText(displayName)}`,
             html: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -182,9 +165,6 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F5F1EE; border-radius: 12px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 8px 0; font-size: 15px; color: #4A4440;">
-                      <strong>Business:</strong> ${sanitizePlainText(businessName)}
-                    </p>
                     <p style="margin: 0 0 8px 0; font-size: 15px; color: #4A4440;">
                       <strong>Email:</strong> ${sanitizePlainText(normalizedEmail)}
                     </p>
@@ -214,7 +194,6 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
             'Tenant signup notification sent'
           );
         } catch (notificationError) {
-          // Log warning but don't fail signup - notification is best-effort
           logger.warn(
             {
               tenantId: tenant.id,
@@ -231,12 +210,8 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
         tenantId: tenant.id,
         slug: tenant.slug,
         email: tenant.email,
-        apiKeyPublic: tenant.apiKeyPublic,
       });
     } catch (error) {
-      // Log failed signup attempts with appropriate level
-      // TenantProvisioningError is a known failure mode - log at error level
-      // Other errors (validation, conflict) are expected - log at warn level
       const isCriticalError = error instanceof TenantProvisioningError;
 
       const logFn = isCriticalError ? logger.error.bind(logger) : logger.warn.bind(logger);
@@ -248,7 +223,6 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
           ipAddress,
           timestamp: new Date().toISOString(),
           error: error instanceof Error ? error.message : 'Unknown error',
-          // Include original cause for provisioning errors (internal debugging)
           ...(isCriticalError && error.originalError ? { cause: error.originalError.message } : {}),
         },
         isCriticalError

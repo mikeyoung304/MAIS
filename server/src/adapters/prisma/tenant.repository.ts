@@ -4,7 +4,7 @@
  */
 
 import type { PrismaClient, Tenant } from '../../generated/prisma/client';
-import type { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import { TenantPublicDtoSchema } from '@macon/contracts';
 import type { TenantPublicDto } from '@macon/contracts';
 // NOTE: LandingPageConfigSchema, LenientLandingPageConfigSchema removed
@@ -48,10 +48,17 @@ export interface UpdateTenantInput {
   aiMessagesUsed?: number;
   aiMessagesResetAt?: Date;
   // Onboarding state fields (Session Bootstrap Protocol)
-  onboardingPhase?: 'NOT_STARTED' | 'BUILDING' | 'COMPLETED' | 'SKIPPED';
+  onboardingStatus?: 'PENDING_PAYMENT' | 'PENDING_INTAKE' | 'BUILDING' | 'SETUP' | 'COMPLETE';
   onboardingCompletedAt?: Date | null;
   // Reveal animation one-shot guard (Phase 3 — Dashboard Rebuild)
   revealCompletedAt?: Date | null;
+  // Background Build Pipeline (Phase 4)
+  buildStatus?: string | null;
+  buildError?: string | null;
+  buildIdempotencyKey?: string | null;
+  buildSectionResults?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+  buildStartedAt?: Date | null;
+  buildRetryCount?: number;
 }
 
 /**

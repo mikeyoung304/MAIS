@@ -122,11 +122,13 @@ export function createAdminTenantsRoutes(options: AdminTenantsRoutesOptions): Ro
           createdAt: result.tenant.createdAt.toISOString(),
         },
         secretKey: result.secretKey, // ⚠️ Shown ONCE, never stored in plaintext
-        segment: {
-          id: result.segment.id,
-          slug: result.segment.slug,
-          name: result.segment.name,
-        },
+        segment: result.segment
+          ? {
+              id: result.segment.id,
+              slug: result.segment.slug,
+              name: result.segment.name,
+            }
+          : null,
         tiers: result.tiers.map((tier) => ({
           id: tier.id,
           slug: tier.slug,

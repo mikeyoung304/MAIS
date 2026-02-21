@@ -234,10 +234,17 @@ export interface CalendarRoutesDeps {
   internalApiSecret?: string;
 }
 
+export interface OnboardingRoutesDeps {
+  /** Tenant onboarding service for setup progress derivation */
+  tenantOnboardingService?: import('../services/tenant-onboarding.service').TenantOnboardingService;
+  internalApiSecret?: string;
+}
+
 /** Union type for the aggregator — satisfies all domain interfaces */
 export type InternalAgentRoutesDeps = DiscoveryRoutesDeps &
   StorefrontRoutesDeps &
   MarketingRoutesDeps &
   BookingRoutesDeps &
   ProjectHubRoutesDeps &
-  CalendarRoutesDeps;
+  CalendarRoutesDeps &
+  OnboardingRoutesDeps;

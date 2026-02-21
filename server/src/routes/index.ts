@@ -51,6 +51,8 @@ import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
 import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.routes';
 import { createTenantAgentService } from '../services/tenant-agent.service';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
+import { createTenantAdminOnboardingRoutes } from './tenant-admin-onboarding.routes';
+import type { OnboardingIntakeService } from '../services/onboarding-intake.service';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
 import { createSegmentsRouter } from './segments.routes';
@@ -98,6 +100,7 @@ import type { WebhookDeliveryService } from '../services/webhook-delivery.servic
 import type { AvailabilityService } from '../services/availability.service';
 import type { ProjectHubService } from '../services/project-hub.service';
 import type { DiscoveryService } from '../services/discovery.service';
+import type { BackgroundBuildService } from '../services/background-build.service';
 import type { ResearchService } from '../services/research.service';
 import type { GoogleCalendarService } from '../services/google-calendar.service';
 import type { GoogleCalendarOAuthService } from '../services/google-calendar-oauth.service';
@@ -133,6 +136,8 @@ interface Services {
   research?: ResearchService;
   googleCalendar?: GoogleCalendarService;
   googleCalendarOAuth?: GoogleCalendarOAuthService;
+  backgroundBuild?: BackgroundBuildService;
+  onboardingIntake?: OnboardingIntakeService;
 }
 
 interface Repositories {
@@ -653,6 +658,19 @@ export function createV1Router(
       logger.info('✅ Tenant admin webhook routes mounted at /v1/tenant-admin/webhooks');
     }
 
+    // Register tenant admin onboarding routes (for Stripe checkout + state + intake form)
+    // Requires tenant admin authentication
+    // OnboardingIntakeService comes from DI container (11072)
+    const tenantAdminOnboardingRoutes = createTenantAdminOnboardingRoutes({
+      config,
+      tenantRepo,
+      intakeService: services.onboardingIntake,
+      buildService: services.backgroundBuild,
+      onboardingService: services.tenantOnboarding,
+    });
+    app.use('/v1/tenant-admin/onboarding', tenantAuthMiddleware, tenantAdminOnboardingRoutes);
+    logger.info('✅ Tenant admin onboarding routes mounted at /v1/tenant-admin/onboarding');
+
     // Register tenant admin domain routes (for custom domain management)
     // Requires tenant admin authentication
     const domainVerificationService = new DomainVerificationService(prismaClient);
@@ -768,6 +786,8 @@ export function createV1Router(
       availabilityService: services.availability,
       googleCalendarService: services.googleCalendar,
       blackoutRepo: new PrismaBlackoutRepository(prismaClient),
+      // Onboarding tools deps (tenant-agent setup progress)
+      tenantOnboardingService: services.tenantOnboarding,
     });
     app.use('/v1/internal/agent', internalAgentRoutes);
     logger.info('✅ Internal agent routes mounted at /v1/internal/agent');
