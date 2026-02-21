@@ -241,19 +241,10 @@ export class DiscoveryService {
     // Lightweight state computation (replaces slot machine)
     const state = this.computeOnboardingState(knownFactKeys);
 
-    // Advance status from PENDING_INTAKE → BUILDING when first fact is stored
-    const shouldAdvanceStatus = previousStatus === 'PENDING_INTAKE' && knownFactKeys.length > 0;
-
-    // Single DB write: store facts + advance status if needed
-    const updateData: Record<string, unknown> = { branding: { ...branding, discoveryFacts } };
-    if (shouldAdvanceStatus) {
-      updateData.onboardingStatus = 'BUILDING';
-      logger.info(
-        { tenantId, from: previousStatus, to: 'BUILDING' },
-        '[DiscoveryService] Onboarding status advanced'
-      );
-    }
-    await this.tenantRepo.update(tenantId, updateData);
+    // Store facts only — status advancement is handled by completeIntake()
+    await this.tenantRepo.update(tenantId, {
+      branding: { ...branding, discoveryFacts },
+    });
 
     // Invalidate bootstrap cache so next request gets updated facts
     this.invalidateBootstrapCache(tenantId);
@@ -264,7 +255,7 @@ export class DiscoveryService {
       value,
       totalFactsKnown: knownFactKeys.length,
       knownFactKeys,
-      currentPhase: shouldAdvanceStatus ? 'BUILDING' : previousStatus,
+      currentPhase: previousStatus,
       readyForReveal: state.readyForReveal,
       missingForMVP: state.missingForMVP,
       message: `Stored ${key} successfully. Now know: ${knownFactKeys.join(', ')}`,

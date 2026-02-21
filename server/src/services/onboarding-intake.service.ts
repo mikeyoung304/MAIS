@@ -55,6 +55,13 @@ const PRIVATE_IP_PATTERNS = [
   /^fe80:/i,
   /^0\.0\.0\.0$/,
   /^localhost$/i,
+  // IPv4-mapped IPv6 addresses (::ffff:x.x.x.x bypasses IPv4 checks)
+  /^::ffff:127\./i,
+  /^::ffff:10\./i,
+  /^::ffff:172\.(1[6-9]|2\d|3[01])\./i,
+  /^::ffff:192\.168\./i,
+  /^::ffff:169\.254\./i,
+  /^::ffff:0\.0\.0\.0$/i,
 ];
 
 /**

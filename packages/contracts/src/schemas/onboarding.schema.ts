@@ -46,7 +46,6 @@ export function parseOnboardingStatus(value: unknown): OnboardingStatus {
  */
 export const BuildStatusSchema = z.enum([
   'QUEUED',
-  'SCRAPING',
   'GENERATING_HERO',
   'GENERATING_ABOUT',
   'GENERATING_SERVICES',
@@ -55,6 +54,24 @@ export const BuildStatusSchema = z.enum([
 ]);
 
 export type BuildStatus = z.infer<typeof BuildStatusSchema>;
+
+/**
+ * Per-section status during build pipeline.
+ * Canonical definition — imported by background-build.service.ts and frontend components.
+ */
+export const SectionStatusSchema = z.enum(['pending', 'generating', 'complete', 'failed']);
+export type SectionStatus = z.infer<typeof SectionStatusSchema>;
+
+/**
+ * Build status response returned by GET /build-status.
+ * Canonical definition — imported by background-build.service.ts and frontend poll pages.
+ */
+export const BuildStatusResponseSchema = z.object({
+  buildStatus: z.string().nullable(),
+  buildError: z.string().nullable(),
+  sections: z.record(z.string(), SectionStatusSchema),
+});
+export type BuildStatusResponse = z.infer<typeof BuildStatusResponseSchema>;
 
 /**
  * Valid state transitions for OnboardingStatus
@@ -69,7 +86,7 @@ export const VALID_ONBOARDING_TRANSITIONS: Record<OnboardingStatus, OnboardingSt
 };
 
 // Legacy aliases for backward compatibility during migration
-// TODO: Remove after all consumers are updated
+// TODO(2026-Q2): remove deprecated aliases
 /** @deprecated Use OnboardingStatusSchema */
 export const OnboardingPhaseSchema = OnboardingStatusSchema;
 /** @deprecated Use OnboardingStatus */
@@ -540,8 +557,24 @@ export const SetupProgressSchema = z.object({
 
 export type SetupProgress = z.infer<typeof SetupProgressSchema>;
 
+/**
+ * Valid checklist item IDs (must match deriveSetupProgress() in tenant-onboarding.service.ts)
+ */
+export const CHECKLIST_ITEM_IDS = [
+  'review_sections',
+  'upload_photos',
+  'add_testimonials',
+  'add_faq',
+  'add_gallery',
+  'connect_stripe',
+  'set_availability',
+  'publish_website',
+] as const;
+
+export type ChecklistItemId = (typeof CHECKLIST_ITEM_IDS)[number];
+
 export const DismissChecklistItemSchema = z.object({
-  itemId: z.string().min(1),
+  itemId: z.enum(CHECKLIST_ITEM_IDS),
 });
 
 export type DismissChecklistItemInput = z.infer<typeof DismissChecklistItemSchema>;

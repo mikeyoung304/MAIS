@@ -24,7 +24,12 @@ import type { OnboardingIntakeService } from '../services/onboarding-intake.serv
 import { IntakeValidationError } from '../services/onboarding-intake.service';
 import type { BackgroundBuildService } from '../services/background-build.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
-import { IntakeAnswerRequestSchema, DismissChecklistItemSchema } from '@macon/contracts';
+import {
+  IntakeAnswerRequestSchema,
+  DismissChecklistItemSchema,
+  type OnboardingStatus,
+  parseOnboardingStatus,
+} from '@macon/contracts';
 
 interface OnboardingRoutesOptions {
   config: Config;
@@ -37,6 +42,14 @@ interface OnboardingRoutesOptions {
 export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptions): Router {
   const { config, tenantRepo, intakeService, buildService, onboardingService } = options;
   const router = Router();
+
+  // Create Stripe instance once at factory level (not per-request — 11093)
+  const stripe = config.STRIPE_SECRET_KEY
+    ? new Stripe(config.STRIPE_SECRET_KEY, {
+        apiVersion: '2025-10-29.clover',
+        typescript: true,
+      })
+    : null;
 
   /**
    * POST /create-checkout
@@ -77,7 +90,7 @@ export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptio
       }
 
       // Validate Stripe configuration
-      if (!config.STRIPE_SECRET_KEY) {
+      if (!stripe) {
         logger.error({ tenantId }, 'STRIPE_SECRET_KEY not configured');
         res.status(503).json({
           error: 'payment_unavailable',
@@ -94,11 +107,6 @@ export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptio
         });
         return;
       }
-
-      const stripe = new Stripe(config.STRIPE_SECRET_KEY, {
-        apiVersion: '2025-10-29.clover',
-        typescript: true,
-      });
 
       // Build dynamic URLs per tenant (prevents all tenants redirecting to same URL)
       const appUrl = config.NEXTJS_APP_URL || config.CLIENT_URL || 'http://localhost:3000';
@@ -170,7 +178,7 @@ export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptio
       res.status(200).json({
         status: tenant.onboardingStatus,
         buildStatus: tenant.buildStatus,
-        redirectTo: getRedirectForStatus(tenant.onboardingStatus),
+        redirectTo: getRedirectForStatus(parseOnboardingStatus(tenant.onboardingStatus)),
       });
     } catch (error) {
       next(error);
@@ -504,9 +512,10 @@ export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptio
 }
 
 /**
- * Get the redirect path for a given onboarding status
+ * Get the redirect path for a given onboarding status.
+ * Typed as OnboardingStatus for exhaustiveness checking.
  */
-function getRedirectForStatus(status: string): string {
+function getRedirectForStatus(status: OnboardingStatus): string {
   switch (status) {
     case 'PENDING_PAYMENT':
       return '/onboarding/payment';
@@ -518,7 +527,5 @@ function getRedirectForStatus(status: string): string {
       return '/tenant/dashboard';
     case 'COMPLETE':
       return '/tenant/dashboard';
-    default:
-      return '/onboarding/payment';
   }
 }

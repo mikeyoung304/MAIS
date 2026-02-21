@@ -65,7 +65,8 @@ export interface SignupCreateTenantInput {
  */
 export interface ProvisionedTenantResult {
   tenant: Tenant;
-  segment: Segment;
+  /** Segment — absent for simplified signup (created by build pipeline later) */
+  segment?: Segment;
   /** Pricing tiers (GOOD/BETTER/BEST) created for the segment */
   tiers: Tier[];
   /** Section content created for the tenant's storefront */
@@ -291,7 +292,7 @@ export class TenantProvisioningService {
         // Return with empty segment/tiers/sections (created by build pipeline later)
         return {
           tenant,
-          segment: null as unknown as Segment,
+          segment: undefined,
           tiers: [] as Tier[],
           sectionContent: [] as SectionContent[],
         };

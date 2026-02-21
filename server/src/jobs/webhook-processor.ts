@@ -19,6 +19,7 @@ import type { PaymentProvider, WebhookRepository } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import { WebhookValidationError, WebhookProcessingError } from '../lib/errors';
+import { parseOnboardingStatus } from '@macon/contracts';
 import type { WebhookJobData } from './types';
 
 // Zod schema for subscription checkout metadata (Product-Led Growth)
@@ -547,6 +548,22 @@ export class WebhookProcessor {
       },
       'Processing membership checkout completion'
     );
+
+    // Status guard: only advance if tenant is still in PENDING_PAYMENT
+    // Prevents webhook replays from regressing a tenant who already advanced
+    const tenant = await this.tenantRepo.findById(tenantId);
+    if (!tenant) {
+      throw new WebhookProcessingError(`Tenant not found: ${tenantId}`);
+    }
+
+    const currentStatus = parseOnboardingStatus(tenant.onboardingStatus);
+    if (currentStatus !== 'PENDING_PAYMENT') {
+      logger.warn(
+        { tenantId, eventId: event.id, currentStatus },
+        'Membership webhook received but tenant already past PENDING_PAYMENT — ignoring'
+      );
+      return;
+    }
 
     // Transition onboarding status: PENDING_PAYMENT → PENDING_INTAKE
     await this.tenantRepo.update(tenantId, {

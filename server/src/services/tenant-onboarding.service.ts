@@ -9,7 +9,12 @@
 import type { PrismaClient, Segment, Tier, BlockType } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { DEFAULT_SEGMENT, DEFAULT_TIERS } from '../lib/tenant-defaults';
-import type { SetupProgress } from '@macon/contracts';
+import {
+  type SetupProgress,
+  type OnboardingStatus,
+  VALID_ONBOARDING_TRANSITIONS,
+  parseOnboardingStatus,
+} from '@macon/contracts';
 
 /**
  * Options for createDefaultData
@@ -171,8 +176,11 @@ export class TenantOnboardingService {
   /**
    * Skip the onboarding flow for a tenant.
    *
-   * @returns result with previousPhase, or null if tenant not found
-   * @throws Error if onboarding already completed or skipped (409 conflict)
+   * Guard: Only allows skip from post-payment states (PENDING_BUILD and later).
+   * Skipping from PENDING_PAYMENT is rejected — tenant must pay first.
+   *
+   * @returns result with previousStatus
+   * @throws InvalidTransitionError if status is PENDING_PAYMENT or already COMPLETE
    */
   async skipOnboarding(tenantId: string): Promise<SkipOnboardingResult> {
     const tenant = await this.prisma.tenant.findUnique({
@@ -184,7 +192,12 @@ export class TenantOnboardingService {
       throw new Error('Tenant not found');
     }
 
-    const currentStatus = tenant.onboardingStatus || 'PENDING_PAYMENT';
+    const currentStatus = parseOnboardingStatus(tenant.onboardingStatus);
+
+    // Guard: cannot skip from PENDING_PAYMENT (must pay first)
+    if (currentStatus === 'PENDING_PAYMENT') {
+      throw new InvalidTransitionError(currentStatus, 'COMPLETE');
+    }
 
     if (currentStatus === 'COMPLETE') {
       const error = new Error('Onboarding already finished') as Error & { status: string };
@@ -192,15 +205,10 @@ export class TenantOnboardingService {
       throw error;
     }
 
-    await this.prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        onboardingStatus: 'COMPLETE',
-        onboardingCompletedAt: new Date(),
-      },
-    });
+    // Use the validated transition helper
+    const result = await this.transitionOnboardingStatus(tenantId, currentStatus, 'COMPLETE');
 
-    return { previousStatus: currentStatus, status: 'COMPLETE' };
+    return { previousStatus: result.previousStatus, status: 'COMPLETE' };
   }
 
   /**
@@ -229,6 +237,79 @@ export class TenantOnboardingService {
     });
 
     return { alreadyCompleted: false };
+  }
+
+  // ==========================================================================
+  // State Machine Transition Helper
+  // ==========================================================================
+
+  /**
+   * Validated state transition with optimistic locking.
+   *
+   * 1. Reads current status + onboardingVersion
+   * 2. Validates transition is in VALID_ONBOARDING_TRANSITIONS
+   * 3. Updates with WHERE version = currentVersion (optimistic lock)
+   * 4. Increments onboardingVersion on success
+   *
+   * All status mutations across the codebase should route through this method.
+   *
+   * @throws InvalidTransitionError if transition is not allowed
+   * @throws ConcurrentModificationError if version changed between read and write
+   * @throws Error if tenant not found
+   */
+  async transitionOnboardingStatus(
+    tenantId: string,
+    expectedFrom: OnboardingStatus,
+    to: OnboardingStatus
+  ): Promise<{ previousStatus: OnboardingStatus; newStatus: OnboardingStatus; version: number }> {
+    // Validate transition is allowed
+    const allowedTargets = VALID_ONBOARDING_TRANSITIONS[expectedFrom];
+    if (!allowedTargets.includes(to)) {
+      throw new InvalidTransitionError(expectedFrom, to);
+    }
+
+    // Read current state
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { onboardingStatus: true, onboardingVersion: true },
+    });
+
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+
+    const currentStatus = parseOnboardingStatus(tenant.onboardingStatus);
+
+    // Verify current status matches expected
+    if (currentStatus !== expectedFrom) {
+      throw new InvalidTransitionError(currentStatus, to);
+    }
+
+    // Optimistic locking: update only if version hasn't changed
+    const updated = await this.prisma.tenant.updateMany({
+      where: {
+        id: tenantId,
+        onboardingVersion: tenant.onboardingVersion,
+      },
+      data: {
+        onboardingStatus: to,
+        onboardingVersion: tenant.onboardingVersion + 1,
+        ...(to === 'COMPLETE' ? { onboardingCompletedAt: new Date() } : {}),
+      },
+    });
+
+    if (updated.count === 0) {
+      throw new ConcurrentModificationError(tenant.onboardingVersion);
+    }
+
+    const newVersion = tenant.onboardingVersion + 1;
+
+    logger.info(
+      { tenantId, from: expectedFrom, to, version: newVersion },
+      '[Onboarding] Status transitioned'
+    );
+
+    return { previousStatus: expectedFrom, newStatus: to, version: newVersion };
   }
 
   // ==========================================================================
@@ -377,9 +458,11 @@ export class TenantOnboardingService {
 
   /**
    * Dismiss a checklist item (add to dismissedChecklistItems array).
-   * Idempotent: dismissing an already-dismissed item is a no-op.
+   * Uses Prisma's atomic push to avoid read-then-write race conditions.
+   * Idempotent: checks for duplicates before pushing.
    */
   async dismissChecklistItem(tenantId: string, itemId: string): Promise<void> {
+    // Check for duplicates first (idempotency)
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { dismissedChecklistItems: true },
@@ -394,13 +477,40 @@ export class TenantOnboardingService {
       return; // Already dismissed, no-op
     }
 
+    // Atomic push — no read-modify-write race
     await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
-        dismissedChecklistItems: [...dismissed, itemId],
+        dismissedChecklistItems: { push: itemId },
       },
     });
 
     logger.info({ tenantId, itemId }, '[Onboarding] Dismissed checklist item');
+  }
+}
+
+// =============================================================================
+// Error Classes
+// =============================================================================
+
+export class InvalidTransitionError extends Error {
+  public readonly from: string;
+  public readonly to: string;
+
+  constructor(from: string, to: string) {
+    super(`Invalid onboarding transition: ${from} → ${to}`);
+    this.name = 'InvalidTransitionError';
+    this.from = from;
+    this.to = to;
+  }
+}
+
+export class ConcurrentModificationError extends Error {
+  public readonly currentVersion: number;
+
+  constructor(currentVersion: number) {
+    super(`Concurrent modification detected (version: ${currentVersion})`);
+    this.name = 'ConcurrentModificationError';
+    this.currentVersion = currentVersion;
   }
 }

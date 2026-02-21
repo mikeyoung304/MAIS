@@ -58,9 +58,12 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
         throw new ValidationError('Invalid email format');
       }
 
-      // Validate password length
+      // Validate password length (max 128 prevents bcrypt DoS — bcrypt truncates at 72 bytes anyway)
       if (password.length < 8) {
         throw new ValidationError('Password must be at least 8 characters');
+      }
+      if (password.length > 128) {
+        throw new ValidationError('Password must be at most 128 characters');
       }
 
       // Validate optional business name

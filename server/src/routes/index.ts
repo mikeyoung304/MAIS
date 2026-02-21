@@ -52,7 +52,7 @@ import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.
 import { createTenantAgentService } from '../services/tenant-agent.service';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
 import { createTenantAdminOnboardingRoutes } from './tenant-admin-onboarding.routes';
-import { OnboardingIntakeService } from '../services/onboarding-intake.service';
+import type { OnboardingIntakeService } from '../services/onboarding-intake.service';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
 import { createSegmentsRouter } from './segments.routes';
@@ -137,6 +137,7 @@ interface Services {
   googleCalendar?: GoogleCalendarService;
   googleCalendarOAuth?: GoogleCalendarOAuthService;
   backgroundBuild?: BackgroundBuildService;
+  onboardingIntake?: OnboardingIntakeService;
 }
 
 interface Repositories {
@@ -659,14 +660,11 @@ export function createV1Router(
 
     // Register tenant admin onboarding routes (for Stripe checkout + state + intake form)
     // Requires tenant admin authentication
-    // Create intake service when discovery service is available (Phase 3 intake form)
-    const intakeService = services.discovery
-      ? new OnboardingIntakeService(tenantRepo, services.discovery)
-      : undefined;
+    // OnboardingIntakeService comes from DI container (11072)
     const tenantAdminOnboardingRoutes = createTenantAdminOnboardingRoutes({
       config,
       tenantRepo,
-      intakeService,
+      intakeService: services.onboardingIntake,
       buildService: services.backgroundBuild,
       onboardingService: services.tenantOnboarding,
     });

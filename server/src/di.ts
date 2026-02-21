@@ -29,6 +29,7 @@ import { ProjectHubService } from './services/project-hub.service';
 import { DiscoveryService } from './services/discovery.service';
 import { ResearchService } from './services/research.service';
 import { BackgroundBuildService } from './services/background-build.service';
+import { OnboardingIntakeService } from './services/onboarding-intake.service';
 import { createContextBuilderService } from './services/context-builder.service';
 import { UploadAdapter } from './adapters/upload.adapter';
 import { NodeFileSystemAdapter } from './adapters/filesystem.adapter';
@@ -104,6 +105,7 @@ export interface Container {
     discovery?: DiscoveryService; // Onboarding discovery + bootstrap
     research?: ResearchService; // Background research triggers
     backgroundBuild?: BackgroundBuildService; // Phase 4 onboarding build pipeline
+    onboardingIntake?: OnboardingIntakeService; // Phase 3 intake form
 
     // OPTIONAL SERVICES - Degrade gracefully (try/catch with logger.warn)
     // Application adapts behavior when these are unavailable
@@ -307,6 +309,9 @@ export function buildContainer(config: Config): Container {
       mockPrisma
     );
 
+    // Create OnboardingIntakeService (Phase 3 — intake form)
+    const onboardingIntakeService = new OnboardingIntakeService(mockTenantRepo, discoveryService);
+
     // Create HealthCheckService with mock adapters (won't be used in mock mode)
     const healthCheckService = new HealthCheckService({
       stripeAdapter: undefined, // Mock mode doesn't use real adapters
@@ -369,6 +374,7 @@ export function buildContainer(config: Config): Container {
       discovery: discoveryService,
       research: researchService,
       backgroundBuild: backgroundBuildService,
+      onboardingIntake: onboardingIntakeService,
     };
 
     const repositories = {
@@ -684,6 +690,9 @@ export function buildContainer(config: Config): Container {
     prisma
   );
 
+  // Create OnboardingIntakeService (Phase 3 — intake form)
+  const onboardingIntakeService = new OnboardingIntakeService(tenantRepo, discoveryService);
+
   // Create WebhookDeliveryService for outbound webhook delivery (TODO-278)
   const webhookDeliveryService = new WebhookDeliveryService(webhookSubscriptionRepo, eventEmitter);
 
@@ -837,6 +846,7 @@ export function buildContainer(config: Config): Container {
     discovery: discoveryService,
     research: researchService,
     backgroundBuild: backgroundBuildService,
+    onboardingIntake: onboardingIntakeService,
   };
 
   // Create EarlyAccessRepository for early access request persistence
