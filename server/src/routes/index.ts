@@ -49,6 +49,7 @@ import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes'
 import { createCalendarOAuthRoutes } from './tenant-admin-calendar-oauth.routes';
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
 import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.routes';
+import { createTenantAgentService } from '../services/tenant-agent.service';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
@@ -669,8 +670,9 @@ export function createV1Router(
       prismaClient,
       services.sectionContent
     );
+    const tenantAgentService = createTenantAgentService(prismaClient, tenantAgentContextBuilder);
     const tenantAdminTenantAgentRoutes = createTenantAdminTenantAgentRoutes({
-      prisma: prismaClient,
+      tenantAgent: tenantAgentService,
       contextBuilder: tenantAgentContextBuilder,
       tenantOnboarding: services.tenantOnboarding,
     });
