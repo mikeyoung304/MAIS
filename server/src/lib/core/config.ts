@@ -67,6 +67,8 @@ const ConfigSchema = z.object({
   STRIPE_CONNECT_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_STARTER_PRICE_ID: z.string().optional(),
   STRIPE_PRO_PRICE_ID: z.string().optional(),
+  // Membership subscription price ID for onboarding payment step
+  STRIPE_MEMBERSHIP_PRICE_ID: z.string().optional(),
 
   // --- Email ---
   POSTMARK_SERVER_TOKEN: z.string().optional(),

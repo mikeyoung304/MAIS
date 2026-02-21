@@ -28,6 +28,12 @@ const SubscriptionMetadataSchema = z.object({
   tier: z.enum(['STARTER', 'PRO']).optional(), // Optional for backward compat
 });
 
+// Zod schema for membership checkout metadata (onboarding payment step)
+const MembershipMetadataSchema = z.object({
+  tenantId: z.string(),
+  checkoutType: z.literal('membership'),
+});
+
 // Zod schema for Stripe session (runtime validation)
 const StripeSessionSchema = z.object({
   id: z.string(),
@@ -188,6 +194,13 @@ export class WebhookProcessor {
     // Get raw session object for initial type detection
     const rawSession = event.data.object as Stripe.Checkout.Session;
     const metadata = rawSession.metadata || {};
+
+    // Check if this is a membership checkout (onboarding payment step)
+    const membershipResult = MembershipMetadataSchema.safeParse(metadata);
+    if (membershipResult.success) {
+      await this.processMembershipCheckout(event, rawSession, membershipResult.data.tenantId);
+      return;
+    }
 
     // Check if this is a subscription checkout (Product-Led Growth)
     const subscriptionResult = SubscriptionMetadataSchema.safeParse(metadata);
@@ -498,6 +511,53 @@ export class WebhookProcessor {
         'Payment failed during checkout - no booking created'
       );
     }
+  }
+
+  /**
+   * Process membership checkout completion (onboarding payment step)
+   *
+   * When a new tenant completes the membership payment during onboarding:
+   * 1. Transition onboardingStatus from PENDING_PAYMENT → PENDING_INTAKE
+   * 2. Store stripeCustomerId for future billing
+   *
+   * This advances them to the intake form step in the onboarding flow.
+   */
+  private async processMembershipCheckout(
+    event: Stripe.Event,
+    session: Stripe.Checkout.Session,
+    tenantId: string
+  ): Promise<void> {
+    if (!this.tenantRepo) {
+      logger.error(
+        { eventId: event.id, tenantId },
+        'TenantRepository not available - cannot process membership checkout'
+      );
+      throw new WebhookProcessingError('TenantRepository not configured for membership processing');
+    }
+
+    const customerId =
+      typeof session.customer === 'string' ? session.customer : session.customer?.id;
+
+    logger.info(
+      {
+        eventId: event.id,
+        sessionId: session.id,
+        tenantId,
+        customerId,
+      },
+      'Processing membership checkout completion'
+    );
+
+    // Transition onboarding status: PENDING_PAYMENT → PENDING_INTAKE
+    await this.tenantRepo.update(tenantId, {
+      onboardingStatus: 'PENDING_INTAKE',
+      stripeCustomerId: customerId || undefined,
+    });
+
+    logger.info(
+      { tenantId, eventId: event.id },
+      'Membership payment completed - tenant advanced to PENDING_INTAKE'
+    );
   }
 
   /**

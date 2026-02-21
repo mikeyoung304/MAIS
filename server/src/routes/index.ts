@@ -51,6 +51,7 @@ import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
 import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.routes';
 import { createTenantAgentService } from '../services/tenant-agent.service';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
+import { createTenantAdminOnboardingRoutes } from './tenant-admin-onboarding.routes';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
 import { createSegmentsRouter } from './segments.routes';
@@ -652,6 +653,15 @@ export function createV1Router(
       app.use('/v1/tenant-admin/webhooks', tenantAuthMiddleware, tenantAdminWebhookRoutes);
       logger.info('✅ Tenant admin webhook routes mounted at /v1/tenant-admin/webhooks');
     }
+
+    // Register tenant admin onboarding routes (for Stripe checkout + state)
+    // Requires tenant admin authentication
+    const tenantAdminOnboardingRoutes = createTenantAdminOnboardingRoutes({
+      config,
+      tenantRepo,
+    });
+    app.use('/v1/tenant-admin/onboarding', tenantAuthMiddleware, tenantAdminOnboardingRoutes);
+    logger.info('✅ Tenant admin onboarding routes mounted at /v1/tenant-admin/onboarding');
 
     // Register tenant admin domain routes (for custom domain management)
     // Requires tenant admin authentication
