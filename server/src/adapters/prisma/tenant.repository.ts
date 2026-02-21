@@ -52,6 +52,10 @@ export interface UpdateTenantInput {
   onboardingCompletedAt?: Date | null;
   // Reveal animation one-shot guard (Phase 3 — Dashboard Rebuild)
   revealCompletedAt?: Date | null;
+  // Background Build Pipeline (Phase 4)
+  buildStatus?: string | null;
+  buildError?: string | null;
+  buildIdempotencyKey?: string | null;
 }
 
 /**

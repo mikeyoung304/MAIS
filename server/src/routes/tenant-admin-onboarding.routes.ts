@@ -6,7 +6,9 @@
  * - GET /state — Get current onboarding state (used by frontend to determine redirect)
  * - POST /intake/answer — Save a single intake answer (chat-style form)
  * - GET /intake/progress — Get current intake progress
- * - POST /intake/complete — Finalize intake, advance to BUILDING
+ * - POST /intake/complete — Finalize intake, advance to BUILDING + trigger build
+ * - GET /build-status — Poll build progress (Phase 4)
+ * - POST /build/retry — Retry a failed build (Phase 4)
  *
  * Mounted at: /v1/tenant-admin/onboarding
  * Protected by: tenantAuthMiddleware (JWT required)
@@ -20,16 +22,18 @@ import { logger } from '../lib/core/logger';
 import { ValidationError } from '../lib/errors';
 import type { OnboardingIntakeService } from '../services/onboarding-intake.service';
 import { IntakeValidationError } from '../services/onboarding-intake.service';
+import type { BackgroundBuildService } from '../services/background-build.service';
 import { IntakeAnswerRequestSchema } from '@macon/contracts';
 
 interface OnboardingRoutesOptions {
   config: Config;
   tenantRepo: PrismaTenantRepository;
   intakeService?: OnboardingIntakeService;
+  buildService?: BackgroundBuildService;
 }
 
 export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptions): Router {
-  const { config, tenantRepo, intakeService } = options;
+  const { config, tenantRepo, intakeService, buildService } = options;
   const router = Router();
 
   /**
@@ -340,6 +344,89 @@ export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptio
         res.status(400).json(result);
         return;
       }
+
+      // Trigger background build pipeline (Phase 4)
+      // Fire-and-forget: runs async, frontend polls /build-status
+      if (result.status === 'advanced_to_building' && buildService) {
+        buildService.triggerBuild(tenantId).catch((error) => {
+          logger.error(
+            { tenantId, error: error instanceof Error ? error.message : String(error) },
+            'Failed to trigger background build'
+          );
+        });
+      }
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ==========================================================================
+  // Build Pipeline Routes (Phase 4 — Background Build)
+  // ==========================================================================
+
+  /**
+   * GET /build-status
+   *
+   * Returns current build status with per-section progress.
+   * Frontend polls this every 2s during BUILDING state.
+   *
+   * Response: { buildStatus, buildError, sections: { hero, about, services } }
+   *
+   * Requires: BUILDING or later status, buildService configured
+   */
+  router.get('/build-status', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      if (!buildService) {
+        res.status(503).json({ error: 'Build service not configured' });
+        return;
+      }
+
+      const result = await buildService.getBuildStatus(tenantId);
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * POST /build/retry
+   *
+   * Retries a failed build. Only works when buildStatus is FAILED.
+   *
+   * Response: { triggered: boolean }
+   *
+   * Requires: buildService configured, buildStatus === FAILED
+   */
+  router.post('/build/retry', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      if (!buildService) {
+        res.status(503).json({ error: 'Build service not configured' });
+        return;
+      }
+
+      const result = await buildService.retryBuild(tenantId);
+
+      logger.info(
+        { tenantId, triggered: result.triggered, event: 'build_retry' },
+        `Build retry: ${result.triggered ? 'triggered' : 'skipped'}`
+      );
 
       res.status(200).json(result);
     } catch (error) {

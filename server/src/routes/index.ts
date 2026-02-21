@@ -100,6 +100,7 @@ import type { WebhookDeliveryService } from '../services/webhook-delivery.servic
 import type { AvailabilityService } from '../services/availability.service';
 import type { ProjectHubService } from '../services/project-hub.service';
 import type { DiscoveryService } from '../services/discovery.service';
+import type { BackgroundBuildService } from '../services/background-build.service';
 import type { ResearchService } from '../services/research.service';
 import type { GoogleCalendarService } from '../services/google-calendar.service';
 import type { GoogleCalendarOAuthService } from '../services/google-calendar-oauth.service';
@@ -135,6 +136,7 @@ interface Services {
   research?: ResearchService;
   googleCalendar?: GoogleCalendarService;
   googleCalendarOAuth?: GoogleCalendarOAuthService;
+  backgroundBuild?: BackgroundBuildService;
 }
 
 interface Repositories {
@@ -665,6 +667,7 @@ export function createV1Router(
       config,
       tenantRepo,
       intakeService,
+      buildService: services.backgroundBuild,
     });
     app.use('/v1/tenant-admin/onboarding', tenantAuthMiddleware, tenantAdminOnboardingRoutes);
     logger.info('✅ Tenant admin onboarding routes mounted at /v1/tenant-admin/onboarding');
