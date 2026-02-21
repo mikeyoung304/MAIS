@@ -52,7 +52,7 @@ const createMockTenant = (discoveryFacts: KnownFacts = {}) => ({
     voice: { tone: 'warm' },
   },
   onboardingCompletedAt: null,
-  onboardingPhase: 'NOT_STARTED',
+  onboardingStatus: 'PENDING_PAYMENT',
 });
 
 // =============================================================================
@@ -243,8 +243,7 @@ describe('ContextBuilderService', () => {
             dreamClient: 'Entrepreneurs',
           },
         },
-        onboardingDone: true,
-        onboardingPhase: 'COMPLETED',
+        onboardingStatus: 'COMPLETE',
       };
       (mockPrisma.tenant.findUnique as any).mockResolvedValue(mockTenant);
 
@@ -253,7 +252,7 @@ describe('ContextBuilderService', () => {
 
       // Assert
       expect(state.isComplete).toBe(true);
-      expect(state.phase).toBe('COMPLETED');
+      expect(state.status).toBe('COMPLETE');
       expect(state.factCount).toBe(2);
       expect(state.discoveryFacts).toEqual({
         businessType: 'coach',

@@ -59,7 +59,7 @@ export class MockTenantRepository {
       isActive: true,
       isTestTenant: false,
       tier: data.tier || 'FREE',
-      onboardingPhase: 'NOT_STARTED',
+      onboardingStatus: 'PENDING_PAYMENT',
       createdAt: new Date(),
       updatedAt: new Date(),
     };

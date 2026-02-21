@@ -55,7 +55,7 @@ function makeTenant(overrides: Record<string, unknown> = {}) {
     id: 'tenant-1',
     name: 'Test Studio',
     tier: 'FREE',
-    onboardingPhase: 'NOT_STARTED',
+    onboardingStatus: 'PENDING_PAYMENT',
     onboardingCompletedAt: null,
     revealCompletedAt: null,
     branding: {},
@@ -156,7 +156,7 @@ describe('DiscoveryService', () => {
       // Tenant already past NOT_STARTED — phase should stay unchanged
       tenantRepo.findById.mockResolvedValue(
         makeTenant({
-          onboardingPhase: 'BUILDING',
+          onboardingStatus: 'BUILDING',
           branding: {
             discoveryFacts: { businessType: 'Photography', location: 'NYC', servicesOffered: 'y' },
           },
@@ -284,7 +284,7 @@ describe('DiscoveryService', () => {
     });
 
     it('reports onboardingDone for COMPLETED phase', async () => {
-      tenantRepo.findById.mockResolvedValue(makeTenant({ onboardingPhase: 'COMPLETED' }));
+      tenantRepo.findById.mockResolvedValue(makeTenant({ onboardingStatus: 'COMPLETE' }));
       contextBuilder.getBootstrapData.mockResolvedValue({ discoveryFacts: null });
 
       const result = await service.getBootstrap('tenant-1');
@@ -327,7 +327,7 @@ describe('DiscoveryService', () => {
 
   describe('completeOnboarding', () => {
     it('completes onboarding when tiers exist', async () => {
-      tenantRepo.findById.mockResolvedValue(makeTenant({ onboardingPhase: 'BUILDING' }));
+      tenantRepo.findById.mockResolvedValue(makeTenant({ onboardingStatus: 'BUILDING' }));
       catalogService.countTiers.mockResolvedValue(1);
 
       const result = await service.completeOnboarding('tenant-1', {
@@ -340,7 +340,7 @@ describe('DiscoveryService', () => {
         expect(result.publishedUrl).toBe('https://example.com');
       }
       expect(tenantRepo.update).toHaveBeenCalledWith('tenant-1', {
-        onboardingPhase: 'COMPLETED',
+        onboardingStatus: 'COMPLETE',
         onboardingCompletedAt: expect.any(Date),
       });
     });
@@ -349,7 +349,7 @@ describe('DiscoveryService', () => {
       const completedAt = new Date('2026-01-01');
       tenantRepo.findById.mockResolvedValue(
         makeTenant({
-          onboardingPhase: 'COMPLETED',
+          onboardingStatus: 'COMPLETE',
           onboardingCompletedAt: completedAt,
         })
       );

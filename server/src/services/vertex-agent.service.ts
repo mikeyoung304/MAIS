@@ -169,7 +169,7 @@ export class VertexAgentService {
       storefrontState: bootstrap?.storefrontState ?? null,
       // Onboarding state
       onboardingComplete: bootstrap?.onboardingComplete ?? false,
-      onboardingPhase: bootstrap?.onboardingPhase ?? 'NOT_STARTED',
+      onboardingStatus: bootstrap?.onboardingStatus ?? 'PENDING_PAYMENT',
     };
 
     // Create session on ADK with full context
@@ -807,7 +807,7 @@ export class VertexAgentService {
         forbiddenSlots: bootstrap?.forbiddenSlots ?? [],
         storefrontState: bootstrap?.storefrontState ?? null,
         onboardingComplete: bootstrap?.onboardingComplete ?? false,
-        onboardingPhase: bootstrap?.onboardingPhase ?? 'NOT_STARTED',
+        onboardingStatus: bootstrap?.onboardingStatus ?? 'PENDING_PAYMENT',
       };
 
       const response = await fetchWithTimeout(

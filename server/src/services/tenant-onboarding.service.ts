@@ -37,8 +37,8 @@ export interface TenantChatInfo {
  * Result of skipOnboarding operation
  */
 export interface SkipOnboardingResult {
-  previousPhase: string;
-  phase: 'SKIPPED';
+  previousStatus: string;
+  status: 'COMPLETE';
 }
 
 /**
@@ -176,30 +176,30 @@ export class TenantOnboardingService {
   async skipOnboarding(tenantId: string): Promise<SkipOnboardingResult> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { onboardingPhase: true },
+      select: { onboardingStatus: true },
     });
 
     if (!tenant) {
       throw new Error('Tenant not found');
     }
 
-    const currentPhase = tenant.onboardingPhase || 'NOT_STARTED';
+    const currentStatus = tenant.onboardingStatus || 'PENDING_PAYMENT';
 
-    if (currentPhase === 'COMPLETED' || currentPhase === 'SKIPPED') {
-      const error = new Error('Onboarding already finished') as Error & { phase: string };
-      error.phase = currentPhase;
+    if (currentStatus === 'COMPLETE') {
+      const error = new Error('Onboarding already finished') as Error & { status: string };
+      error.status = currentStatus;
       throw error;
     }
 
     await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
-        onboardingPhase: 'SKIPPED',
+        onboardingStatus: 'COMPLETE',
         onboardingCompletedAt: new Date(),
       },
     });
 
-    return { previousPhase: currentPhase, phase: 'SKIPPED' };
+    return { previousStatus: currentStatus, status: 'COMPLETE' };
   }
 
   /**

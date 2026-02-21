@@ -118,14 +118,20 @@ model Tenant {
   // Test Data Identification
   isTestTenant Boolean @default(false) @map("is_test_tenant") // Flag for filtering test data from admin dashboard
 
-  // Onboarding State (Event Sourcing + XState)
-  // Phase tracks current state, version enables optimistic locking, completedAt marks finish
-  onboardingPhase       OnboardingPhase @default(NOT_STARTED)
+  // Onboarding State Machine (Redesign 2026-02-20)
+  // Status tracks position in onboarding funnel: payment → intake → build → setup → complete
+  onboardingStatus      OnboardingStatus @default(PENDING_PAYMENT)
   onboardingCompletedAt DateTime? // When onboarding was finished or skipped
   revealCompletedAt     DateTime? // When the first-draft reveal animation was shown (one-shot guard)
-  onboardingVersion     Int             @default(0) // Optimistic locking version counter
+  onboardingVersion     Int              @default(0) // Optimistic locking version counter
 
-  // Brain dump + location (onboarding conversation redesign)
+  // Background Build Pipeline (Phase 4)
+  buildStatus              String? // QUEUED | SCRAPING | GENERATING_HERO | GENERATING_ABOUT | GENERATING_SERVICES | COMPLETE | FAILED
+  buildError               String? @db.Text // Error message if buildStatus = FAILED
+  buildIdempotencyKey      String? @unique // Prevents duplicate build triggers
+  dismissedChecklistItems  String[] @default([]) // Checklist items user has skipped
+
+  // Brain dump + location (legacy — intake form replaces these for new tenants)
   brainDump String? @db.Text // Freetext "who are you, what do you do"
   city      String? // City from signup form
   state     String? // State from signup form
@@ -997,12 +1003,14 @@ enum SessionType {
   CUSTOMER // Customer using the public booking chatbot
 }
 
-/// Onboarding phase enum — tracks tenant onboarding progress
-enum OnboardingPhase {
-  NOT_STARTED // Initial state - no onboarding interaction yet
-  BUILDING // Active onboarding (replaces legacy DISCOVERY/MARKET_RESEARCH/SERVICES/MARKETING)
-  COMPLETED // Onboarding finished
-  SKIPPED // User opted to skip onboarding
+/// Onboarding status enum — tracks position in onboarding funnel
+/// State machine: PENDING_PAYMENT → PENDING_INTAKE → BUILDING → SETUP → COMPLETE
+enum OnboardingStatus {
+  PENDING_PAYMENT // Account created, awaiting first payment
+  PENDING_INTAKE  // Paid, awaiting intake form completion
+  BUILDING        // Intake complete, background build in progress
+  SETUP           // Build complete, in checklist phase
+  COMPLETE        // Website published, full dashboard access
 }
 
 // ============================================================================

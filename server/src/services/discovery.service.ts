@@ -168,8 +168,7 @@ export class DiscoveryService {
       businessName: tenant.name,
       industry,
       tier: tenant.tier || 'FREE',
-      onboardingDone:
-        tenant.onboardingPhase === 'COMPLETED' || tenant.onboardingPhase === 'SKIPPED',
+      onboardingDone: tenant.onboardingStatus === 'COMPLETE',
       discoveryData: mergedDiscoveryData,
     };
 
@@ -237,21 +236,21 @@ export class DiscoveryService {
 
     // Filter _-prefixed metadata keys from fact keys
     const knownFactKeys = Object.keys(discoveryFacts).filter((k) => !k.startsWith('_'));
-    const previousPhase = (tenant.onboardingPhase as string) || 'NOT_STARTED';
+    const previousStatus = (tenant.onboardingStatus as string) || 'PENDING_PAYMENT';
 
     // Lightweight state computation (replaces slot machine)
     const state = this.computeOnboardingState(knownFactKeys);
 
-    // Advance phase from NOT_STARTED → BUILDING when first fact is stored
-    const shouldAdvancePhase = previousPhase === 'NOT_STARTED' && knownFactKeys.length > 0;
+    // Advance status from PENDING_INTAKE → BUILDING when first fact is stored
+    const shouldAdvanceStatus = previousStatus === 'PENDING_INTAKE' && knownFactKeys.length > 0;
 
-    // Single DB write: store facts + advance phase if needed
+    // Single DB write: store facts + advance status if needed
     const updateData: Record<string, unknown> = { branding: { ...branding, discoveryFacts } };
-    if (shouldAdvancePhase) {
-      updateData.onboardingPhase = 'BUILDING';
+    if (shouldAdvanceStatus) {
+      updateData.onboardingStatus = 'BUILDING';
       logger.info(
-        { tenantId, from: previousPhase, to: 'BUILDING' },
-        '[DiscoveryService] Onboarding phase advanced'
+        { tenantId, from: previousStatus, to: 'BUILDING' },
+        '[DiscoveryService] Onboarding status advanced'
       );
     }
     await this.tenantRepo.update(tenantId, updateData);
@@ -265,7 +264,7 @@ export class DiscoveryService {
       value,
       totalFactsKnown: knownFactKeys.length,
       knownFactKeys,
-      currentPhase: shouldAdvancePhase ? 'BUILDING' : previousPhase,
+      currentPhase: shouldAdvanceStatus ? 'BUILDING' : previousStatus,
       readyForReveal: state.readyForReveal,
       missingForMVP: state.missingForMVP,
       message: `Stored ${key} successfully. Now know: ${knownFactKeys.join(', ')}`,
@@ -345,7 +344,7 @@ export class DiscoveryService {
     }
 
     // Idempotent: already completed
-    if (tenant.onboardingPhase === 'COMPLETED') {
+    if (tenant.onboardingStatus === 'COMPLETE') {
       logger.info(
         { tenantId },
         '[DiscoveryService] Onboarding already completed - returning idempotent response'
@@ -372,7 +371,7 @@ export class DiscoveryService {
     // Update tenant onboarding phase
     const completedAt = new Date();
     await this.tenantRepo.update(tenantId, {
-      onboardingPhase: 'COMPLETED',
+      onboardingStatus: 'COMPLETE',
       onboardingCompletedAt: completedAt,
     });
 

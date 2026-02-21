@@ -47,7 +47,7 @@ export interface MockTenant {
   isActive: boolean;
   isTestTenant: boolean;
   tier: 'FREE' | 'STARTER' | 'PRO';
-  onboardingPhase: string;
+  onboardingStatus: string;
   createdAt: Date;
   updatedAt: Date;
 }

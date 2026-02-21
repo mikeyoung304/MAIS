@@ -34,7 +34,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
     name: 'Test Business',
     slug: 'test-business',
     tier: 'FREE' as const,
-    onboardingPhase: 'NOT_STARTED' as const,
+    onboardingStatus: 'PENDING_PAYMENT' as const,
     branding: {},
     isActive: true,
     createdAt: new Date(),
