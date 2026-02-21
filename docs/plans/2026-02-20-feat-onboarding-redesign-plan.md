@@ -25,6 +25,10 @@ brainstorm: docs/brainstorms/2026-02-20-onboarding-redesign-tenant-agent-brainst
 8. **Native `<video>` element** over libraries — 0 KB vs 30-80KB for a single onboarding clip
 9. **Stripe Checkout URLs must be generated dynamically per tenant** (confirmed by institutional learning from `multi-tenant-stripe-checkout-url-routing.md`)
 
+### Phase 2 Status: ✅ COMPLETE (commit `10209641`)
+
+Simplified signup (email + password only), Stripe Checkout payment step, membership webhook handler, onboarding payment page. Also includes Phase 6 agent prompt rewrite (interviewer → business partner, checklist awareness, pricing consultant). All 1127 tests pass.
+
 ### Phase 1 Status: ✅ COMPLETE (commit `f05e45d6`)
 
 Schema + state machine foundation. Replaced `OnboardingPhase` (4-state) with `OnboardingStatus` (5-state funnel). Added `buildStatus`, `buildError`, `buildIdempotencyKey`, `dismissedChecklistItems` to Tenant model. Added `segmentDetails` + `websiteUrl` discovery fact keys. Updated 23 files across server + frontend. Simplified ContextBuilderService (removed lazy backfill). All 2046 tests pass. Route guards deferred to Phase 2/3 (routes don't exist yet).
@@ -518,25 +522,25 @@ erDiagram
 
 **Signup changes:**
 
-- [ ] Remove `businessName`, `city`, `state`, `brainDump` from signup endpoint
+- [x] Remove `businessName`, `city`, `state`, `brainDump` from signup endpoint
 - [ ] Add `businessName` to intake form (question 0, pre-populated from email domain if possible)
-- [ ] Simplify `TenantProvisioningService.createFromSignup()` — skip segment/tier/section defaults (the background build creates these)
-- [ ] Set `onboardingStatus: PENDING_PAYMENT` on new tenant creation
+- [x] Simplify `TenantProvisioningService.createFromSignup()` — skip segment/tier/section defaults (the background build creates these)
+- [x] Set `onboardingStatus: PENDING_PAYMENT` on new tenant creation
 - [ ] Update signup contract in `packages/contracts/src/api.v1.ts`
 
 **Payment step:**
 
-- [ ] New route: `POST /api/v1/auth/create-checkout-session` (creates Stripe Checkout session)
-- [ ] New webhook handler: `checkout.session.completed` → update `onboardingStatus: PENDING_INTAKE`
-- [ ] Payment page component: `apps/web/src/app/onboarding/payment/page.tsx`
-- [ ] Handle cancelled/failed payments (redirect back with message)
-- [ ] Store `stripeCustomerId` on tenant record from webhook
+- [x] New route: `POST /v1/tenant-admin/onboarding/create-checkout` (creates Stripe Checkout session)
+- [x] New webhook handler: `checkout.session.completed` with `checkoutType: membership` → update `onboardingStatus: PENDING_INTAKE`
+- [x] Payment page component: `apps/web/src/app/onboarding/payment/page.tsx`
+- [x] Handle cancelled/failed payments (redirect back with message)
+- [x] Store `stripeCustomerId` on tenant record from webhook
 
 **Frontend:**
 
-- [ ] New page: `/onboarding/payment` — shows pricing + "Start your membership" CTA → redirects to Stripe Checkout
-- [ ] Update signup page to redirect to `/onboarding/payment` on success (not dashboard)
-- [ ] Success redirect from Stripe → `/onboarding/intake`
+- [x] New page: `/onboarding/payment` — shows pricing + "Start your membership" CTA → redirects to Stripe Checkout
+- [x] Update signup page to redirect to `/onboarding/payment` on success (not dashboard)
+- [x] Success redirect from Stripe → `/onboarding/intake`
 
 **Files modified:**
 
@@ -807,15 +811,15 @@ refetchInterval: (query) => {
 
 **Agent prompt rewrite:**
 
-- [ ] Rewrite `server/src/agent-v2/deploy/tenant/src/prompts/system.ts`
-- [ ] Remove: Phase 1 MVP Sprint interview flow, brain dump analysis, slot metrics handling
-- [ ] Add: "Tenant has provided details via intake form. Full context available in session state."
-- [ ] Add: Checklist awareness — suggest highest-impact incomplete item
-- [ ] Add: Pricing consultant role for tier refinement
-- [ ] Add: Reference to `get_setup_progress` tool usage
-- [ ] Update greeting: no more interview-style open. Start with "Your website is looking good. Want to..."
-- [ ] Keep: Trust tiers, tool-first behavior, voice rules, forbidden words
-- [ ] Keep: Phase 2 enhancement guidance (testimonials, FAQ, gallery, add-ons)
+- [x] Rewrite `server/src/agent-v2/deploy/tenant/src/prompts/system.ts` _(commit 10209641)_
+- [x] Remove: Phase 1 MVP Sprint interview flow, brain dump analysis, slot metrics handling
+- [x] Add: "Tenant has provided details via intake form. Full context available in session state."
+- [x] Add: Checklist awareness — suggest highest-impact incomplete item
+- [x] Add: Pricing consultant role for tier refinement
+- [x] Add: Reference to `get_setup_progress` tool usage
+- [x] Update greeting: no more interview-style open. Start with "Your website is looking good. Want to..."
+- [x] Keep: Trust tiers, tool-first behavior, voice rules, forbidden words
+- [x] Keep: Phase 2 enhancement guidance (testimonials, FAQ, gallery, add-ons)
 
 **Files modified/created:**
 
