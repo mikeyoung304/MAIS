@@ -24,5 +24,8 @@ export * from './schemas/version-history.schema';
 // Section Blueprint (canonical section list for onboarding)
 export * from './schemas/section-blueprint.schema';
 
+// Intake Questions (onboarding chat-style form config)
+export * from './schemas/intake-questions';
+
 // Font Presets (per-tenant theming)
 export * from './constants/font-presets';
