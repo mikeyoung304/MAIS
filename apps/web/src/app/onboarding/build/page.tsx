@@ -6,6 +6,8 @@ import { useAuth } from '@/lib/auth-client';
 import { HandledLogo } from '@/components/ui/handled-logo';
 import { OnboardingVideo } from '@/components/onboarding/OnboardingVideo';
 import { ProgressiveReveal, ConfettiStyles } from '@/components/onboarding/ProgressiveReveal';
+import { OnboardingStepper } from '@/components/onboarding/OnboardingStepper';
+import type { SectionStatus, BuildStatusResponse } from '@macon/contracts';
 
 // =============================================================================
 // Build Page (Onboarding Step 3 — after Intake)
@@ -29,19 +31,7 @@ import { ProgressiveReveal, ConfettiStyles } from '@/components/onboarding/Progr
  * - progress → complete (all sections done)
  */
 
-type SectionStatus = 'pending' | 'generating' | 'complete' | 'failed';
-
 type BuildPageView = 'loading' | 'video' | 'progress' | 'complete';
-
-interface BuildStatusResponse {
-  buildStatus: string | null;
-  buildError: string | null;
-  sections: {
-    hero: SectionStatus;
-    about: SectionStatus;
-    services: SectionStatus;
-  };
-}
 
 const POLL_INTERVAL_MS = 2000;
 const TERMINAL_STATUSES = ['COMPLETE', 'FAILED'];
@@ -62,33 +52,43 @@ function BuildContent() {
 
   // Track whether redirect has been scheduled to prevent duplicates
   const redirectScheduled = useRef(false);
+  // Timer ref for redirect setTimeout — cleared on unmount (11087)
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref-based copy of buildStatus for polling effect (11070)
+  const buildStatusRef = useRef<BuildStatusResponse | null>(null);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    buildStatusRef.current = buildStatus;
+  }, [buildStatus]);
 
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
 
   const hasSectionActivity = useCallback((data: BuildStatusResponse): boolean => {
-    const secs = data.sections;
-    return (
-      secs.hero === 'generating' ||
-      secs.hero === 'complete' ||
-      secs.about === 'generating' ||
-      secs.about === 'complete' ||
-      secs.services === 'generating' ||
-      secs.services === 'complete'
+    return Object.values(data.sections).some(
+      (s) => s === 'generating' || s === 'complete'
     );
   }, []);
 
   const allSectionsComplete = useCallback((data: BuildStatusResponse): boolean => {
-    const secs = data.sections;
-    return secs.hero === 'complete' && secs.about === 'complete' && secs.services === 'complete';
+    const vals = Object.values(data.sections);
+    return vals.length > 0 && vals.every((s) => s === 'complete');
   }, []);
 
   const scheduleRedirect = useCallback(() => {
     if (redirectScheduled.current) return;
     redirectScheduled.current = true;
-    setTimeout(() => router.push('/tenant/dashboard'), REDIRECT_DELAY_MS);
+    redirectTimerRef.current = setTimeout(() => router.push('/tenant/dashboard'), REDIRECT_DELAY_MS);
   }, [router]);
+
+  // Cleanup redirect timer on unmount (11087)
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Determine initial view from build status data
@@ -120,10 +120,14 @@ function BuildContent() {
       return;
     }
 
+    const controller = new AbortController();
+
     const init = async () => {
       try {
         // Check onboarding state — redirect if not BUILDING
-        const stateRes = await fetch('/api/tenant-admin/onboarding/state');
+        const stateRes = await fetch('/api/tenant-admin/onboarding/state', {
+          signal: controller.signal,
+        });
         if (stateRes.ok) {
           const stateData = await stateRes.json();
           // Allow BUILDING or states that show build is done
@@ -144,7 +148,9 @@ function BuildContent() {
         }
 
         // Initial build status fetch
-        const statusRes = await fetch('/api/tenant-admin/onboarding/build-status');
+        const statusRes = await fetch('/api/tenant-admin/onboarding/build-status', {
+          signal: controller.signal,
+        });
         if (!statusRes.ok) {
           throw new Error('Could not load build status.');
         }
@@ -159,6 +165,7 @@ function BuildContent() {
           scheduleRedirect();
         }
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         setLoadError(
           err instanceof Error ? err.message : 'Could not load build status. Try refreshing.'
         );
@@ -166,6 +173,7 @@ function BuildContent() {
     };
 
     init();
+    return () => controller.abort();
   }, [isAuthenticated, sessionLoading, router, resolveInitialView, scheduleRedirect]);
 
   // ---------------------------------------------------------------------------
@@ -174,11 +182,18 @@ function BuildContent() {
 
   useEffect(() => {
     if (view === 'loading' || loadError) return;
-    if (buildStatus && TERMINAL_STATUSES.includes(buildStatus.buildStatus ?? '')) return;
+    // Read from ref to avoid re-triggering this effect on every status update (11070)
+    const currentStatus = buildStatusRef.current;
+    if (currentStatus && TERMINAL_STATUSES.includes(currentStatus.buildStatus ?? '')) return;
+
+    let abortController: AbortController | null = null;
 
     const poll = async () => {
+      abortController = new AbortController();
       try {
-        const res = await fetch('/api/tenant-admin/onboarding/build-status');
+        const res = await fetch('/api/tenant-admin/onboarding/build-status', {
+          signal: abortController.signal,
+        });
         if (!res.ok) return;
         const data = (await res.json()) as BuildStatusResponse;
         setBuildStatus(data);
@@ -191,14 +206,18 @@ function BuildContent() {
           // Sections started generating during video — transition to progress
           setView('progress');
         }
-      } catch {
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         // Swallow polling errors — will retry on next tick
       }
     };
 
     const interval = setInterval(poll, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [view, loadError, buildStatus, allSectionsComplete, hasSectionActivity, scheduleRedirect]);
+    return () => {
+      clearInterval(interval);
+      abortController?.abort();
+    };
+  }, [view, loadError, allSectionsComplete, hasSectionActivity, scheduleRedirect]);
 
   // ---------------------------------------------------------------------------
   // Video handlers
@@ -214,11 +233,6 @@ function BuildContent() {
       setView('progress');
     }
   }, [view, buildStatus, allSectionsComplete, scheduleRedirect]);
-
-  const handleVideoEnd = useCallback(() => {
-    // Same as skip — transition out of video
-    handleVideoSkip();
-  }, [handleVideoSkip]);
 
   // ---------------------------------------------------------------------------
   // Retry handler
@@ -294,27 +308,15 @@ function BuildContent() {
       <div className="flex-shrink-0 pt-6 pb-2 px-4 sm:px-6">
         <div className="flex items-center justify-between mb-4">
           <HandledLogo variant="dark" size="md" />
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-sage" />
-              <span className="text-[10px] text-text-muted">Account</span>
-            </div>
-            <div className="w-4 h-px bg-neutral-700" />
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-sage" />
-              <span className="text-[10px] text-text-muted">Paid</span>
-            </div>
-            <div className="w-4 h-px bg-neutral-700" />
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-sage" />
-              <span className="text-[10px] text-text-muted">Setup</span>
-            </div>
-            <div className="w-4 h-px bg-neutral-700" />
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-sage ring-2 ring-sage/30" />
-              <span className="text-[10px] text-text-primary font-medium">Build</span>
-            </div>
-          </div>
+          <OnboardingStepper
+            steps={[
+              { label: 'Account' },
+              { label: 'Paid' },
+              { label: 'Setup' },
+              { label: 'Build' },
+            ]}
+            activeStep={3}
+          />
         </div>
 
         {/* Headline — changes based on view */}
@@ -340,7 +342,6 @@ function BuildContent() {
         {view === 'video' && (
           <OnboardingVideo
             onSkip={handleVideoSkip}
-            onVideoEnd={handleVideoEnd}
             buildComplete={buildComplete}
           />
         )}

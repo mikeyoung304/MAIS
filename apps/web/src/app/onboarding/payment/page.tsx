@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-client';
 import { HandledLogo } from '@/components/ui/handled-logo';
+import { OnboardingStepper } from '@/components/onboarding/OnboardingStepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -47,22 +48,28 @@ function PaymentContent() {
       return;
     }
 
+    const controller = new AbortController();
+
     // Check onboarding state from backend
     const checkState = async () => {
       try {
-        const res = await fetch('/api/tenant-admin/onboarding/state');
+        const res = await fetch('/api/tenant-admin/onboarding/state', {
+          signal: controller.signal,
+        });
         if (!res.ok) return; // Fail silently — page still works
 
         const data = await res.json();
         if (data.redirectTo && data.redirectTo !== '/onboarding/payment') {
           router.push(data.redirectTo);
         }
-      } catch {
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         // Fail silently — if state check fails, show the payment page
       }
     };
 
     checkState();
+    return () => controller.abort();
   }, [isAuthenticated, sessionLoading, router]);
 
   const handleCheckout = async () => {
@@ -128,21 +135,12 @@ function PaymentContent() {
       </div>
 
       {/* Progress indicator */}
-      <div className="flex items-center justify-center gap-2 mb-8">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-sage" />
-          <span className="text-xs text-sage font-medium">Account</span>
-        </div>
-        <div className="w-8 h-px bg-neutral-600" />
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-sage ring-2 ring-sage/30" />
-          <span className="text-xs text-text-primary font-medium">Membership</span>
-        </div>
-        <div className="w-8 h-px bg-neutral-700" />
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-neutral-600" />
-          <span className="text-xs text-text-muted">Setup</span>
-        </div>
+      <div className="mb-8">
+        <OnboardingStepper
+          steps={[{ label: 'Account' }, { label: 'Membership' }, { label: 'Setup' }]}
+          activeStep={1}
+          variant="centered"
+        />
       </div>
 
       {/* Headline */}

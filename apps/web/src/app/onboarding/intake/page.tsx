@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-client';
 import { HandledLogo } from '@/components/ui/handled-logo';
 import { IntakeChat } from '@/components/onboarding/IntakeChat';
+import { OnboardingStepper } from '@/components/onboarding/OnboardingStepper';
 import type { IntakeProgressResponse, IntakeCompleteResponse } from '@macon/contracts';
 
 // =============================================================================
@@ -46,10 +47,14 @@ function IntakeContent() {
       return;
     }
 
+    const controller = new AbortController();
+
     const init = async () => {
       try {
         // Check onboarding state — redirect if not PENDING_INTAKE
-        const stateRes = await fetch('/api/tenant-admin/onboarding/state');
+        const stateRes = await fetch('/api/tenant-admin/onboarding/state', {
+          signal: controller.signal,
+        });
         if (stateRes.ok) {
           const stateData = await stateRes.json();
           if (stateData.redirectTo && stateData.redirectTo !== '/onboarding/intake') {
@@ -59,7 +64,9 @@ function IntakeContent() {
         }
 
         // Fetch saved progress
-        const progressRes = await fetch('/api/tenant-admin/onboarding/intake/progress');
+        const progressRes = await fetch('/api/tenant-admin/onboarding/intake/progress', {
+          signal: controller.signal,
+        });
         if (!progressRes.ok) {
           throw new Error('Could not load your progress.');
         }
@@ -67,6 +74,7 @@ function IntakeContent() {
         const progressData = (await progressRes.json()) as IntakeProgressResponse;
         setProgress(progressData);
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         setLoadError(
           err instanceof Error ? err.message : 'Could not load intake form. Try refreshing.'
         );
@@ -76,6 +84,7 @@ function IntakeContent() {
     };
 
     init();
+    return () => controller.abort();
   }, [isAuthenticated, sessionLoading, router]);
 
   // ---------------------------------------------------------------------------
@@ -142,27 +151,15 @@ function IntakeContent() {
       <div className="flex-shrink-0 pt-6 pb-2 px-4 sm:px-6">
         <div className="flex items-center justify-between mb-4">
           <HandledLogo variant="dark" size="md" />
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-sage" />
-              <span className="text-[10px] text-text-muted">Account</span>
-            </div>
-            <div className="w-4 h-px bg-neutral-700" />
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-sage" />
-              <span className="text-[10px] text-text-muted">Paid</span>
-            </div>
-            <div className="w-4 h-px bg-neutral-700" />
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-sage ring-2 ring-sage/30" />
-              <span className="text-[10px] text-text-primary font-medium">Setup</span>
-            </div>
-            <div className="w-4 h-px bg-neutral-700" />
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-neutral-600" />
-              <span className="text-[10px] text-text-muted">Build</span>
-            </div>
-          </div>
+          <OnboardingStepper
+            steps={[
+              { label: 'Account' },
+              { label: 'Paid' },
+              { label: 'Setup' },
+              { label: 'Build' },
+            ]}
+            activeStep={2}
+          />
         </div>
 
         {/* Headline */}

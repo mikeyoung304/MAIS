@@ -24,31 +24,11 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import type { SetupAction, SetupItem, SetupProgress } from '@macon/contracts';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface SetupAction {
-  type: 'agent_prompt' | 'navigate' | 'modal';
-  prompt?: string;
-  path?: string;
-  modal?: string;
-}
-
-interface SetupItem {
-  id: string;
-  label: string;
-  completed: boolean;
-  dismissed: boolean;
-  action: SetupAction;
-  weight: number;
-}
-
-interface SetupProgress {
-  percentage: number;
-  items: SetupItem[];
-}
 
 interface SetupChecklistProps {
   /** Callback when an agent_prompt action is triggered */

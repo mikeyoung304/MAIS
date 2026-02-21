@@ -11,19 +11,15 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
+import { usePrefersReducedMotion } from '@/hooks';
+import type { SectionStatus } from '@macon/contracts';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type SectionStatus = 'pending' | 'generating' | 'complete' | 'failed';
-
 interface ProgressiveRevealProps {
-  sections: {
-    hero: SectionStatus;
-    about: SectionStatus;
-    services: SectionStatus;
-  };
+  sections: Record<string, SectionStatus>;
   buildError: string | null;
   onRetry: () => void;
   isRetrying: boolean;
@@ -66,16 +62,8 @@ export function ProgressiveReveal({
   const allComplete = completedCount === totalCount;
   const hasFailed = Object.values(sections).some((s) => s === 'failed');
 
-  // Track if user has prefers-reduced-motion
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
-  }, []);
+  // Track if user has prefers-reduced-motion (shared hook, 11088)
+  const prefersReducedMotion = usePrefersReducedMotion() ?? false;
 
   // Debounced aria-live announcements (500ms minimum)
   const lastAnnouncement = useRef<number>(0);
@@ -129,7 +117,7 @@ export function ProgressiveReveal({
             key={section.key}
             label={section.label}
             description={section.description}
-            status={sections[section.key]}
+            status={sections[section.key] ?? 'pending'}
             prefersReducedMotion={prefersReducedMotion}
           />
         ))}
@@ -357,12 +345,7 @@ function AnimatedDotsLabel() {
 
 function CelebrationMoment() {
   const [countdown, setCountdown] = useState(3);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mql.matches);
-  }, []);
+  const prefersReducedMotion = usePrefersReducedMotion() ?? false;
 
   useEffect(() => {
     if (countdown <= 0) return;

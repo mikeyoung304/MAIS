@@ -8,12 +8,16 @@
  *
  * Props:
  * - onSkip: called when user clicks Skip or video encounters unrecoverable error
- * - onVideoEnd: optional callback when video reaches end (for auto-transition)
  * - buildComplete: when true, overlays a "ready" indicator
+ *
+ * Note: The video uses `loop` for continuous playback during the build process,
+ * which means `ended` events never fire. Build completion triggers transitions
+ * from the parent component, not from video playback ending.
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
+import { usePrefersReducedMotion } from '@/hooks';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,40 +25,19 @@ import { logger } from '@/lib/logger';
 
 interface OnboardingVideoProps {
   onSkip: () => void;
-  onVideoEnd?: () => void;
   buildComplete?: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
-
-/** Returns true when user has prefers-reduced-motion: reduce */
-function usePrefersReducedMotion(): boolean {
-  const [prefersReduced, setPrefersReduced] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReduced(mql.matches);
-
-    const handler = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
-  }, []);
-
-  return prefersReduced;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function OnboardingVideo({ onSkip, onVideoEnd, buildComplete }: OnboardingVideoProps) {
+export function OnboardingVideo({ onSkip, buildComplete }: OnboardingVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showSkip, setShowSkip] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [playbackFailed, setPlaybackFailed] = useState(false);
-  const prefersReducedMotion = usePrefersReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion() ?? false;
 
   // -------------------------------------------------------------------------
   // Show Skip button after 3 seconds
@@ -83,13 +66,9 @@ export function OnboardingVideo({ onSkip, onVideoEnd, buildComplete }: Onboardin
   // -------------------------------------------------------------------------
 
   const handleVideoError = useCallback(() => {
-    logger.warn('OnboardingVideo: video failed to load, skipping');
-    onSkip();
-  }, [onSkip]);
-
-  const handleVideoEnded = useCallback(() => {
-    onVideoEnd?.();
-  }, [onVideoEnd]);
+    logger.warn('OnboardingVideo: video failed to load, showing fallback');
+    setPlaybackFailed(true);
+  }, []);
 
   const handleSkip = useCallback(() => {
     onSkip();
@@ -156,6 +135,8 @@ export function OnboardingVideo({ onSkip, onVideoEnd, buildComplete }: Onboardin
   return (
     <div className="relative w-full max-w-2xl mx-auto rounded-2xl overflow-hidden bg-neutral-800">
       {/* Video element */}
+      {/* loop is intentional — video plays continuously during build.
+           Build completion triggers transitions via parent, not video end. (11103) */}
       <video
         ref={videoRef}
         className="w-full aspect-video object-cover"
@@ -165,7 +146,6 @@ export function OnboardingVideo({ onSkip, onVideoEnd, buildComplete }: Onboardin
         playsInline
         aria-label="Onboarding welcome video"
         onError={handleVideoError}
-        onEnded={handleVideoEnded}
       />
 
       {/* Playback failed fallback: show play button over poster */}

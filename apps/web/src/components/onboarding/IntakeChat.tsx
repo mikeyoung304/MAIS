@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -189,167 +189,169 @@ export function IntakeChat({ initialAnswers, initialAnsweredIds, onComplete }: I
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Progress bar */}
-      <div className="flex-shrink-0 px-4 sm:px-6 py-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-text-muted">
-            Question {Math.min(answeredCount + 1, TOTAL_INTAKE_QUESTIONS)} of{' '}
-            {TOTAL_INTAKE_QUESTIONS}
-          </span>
-          <span className="text-xs text-text-muted">
-            {Math.round((answeredCount / TOTAL_INTAKE_QUESTIONS) * 100)}%
-          </span>
-        </div>
-        <div className="h-1 w-full rounded-full bg-neutral-800 overflow-hidden">
-          <motion.div
-            className="h-full rounded-full bg-sage"
-            initial={{ width: 0 }}
-            animate={{
-              width: `${(answeredCount / TOTAL_INTAKE_QUESTIONS) * 100}%`,
-            }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-          />
-        </div>
-      </div>
-
-      {/* Chat log */}
-      <div
-        ref={scrollRef}
-        role="log"
-        aria-live="polite"
-        className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-6"
-      >
-        {/* Answered questions: read-only bubbles */}
-        <AnimatePresence mode="popLayout">
-          {answeredEntries.map((entry, index) => (
+    <MotionConfig reducedMotion="user">
+      <div className="flex flex-col h-full min-h-0">
+        {/* Progress bar */}
+        <div className="flex-shrink-0 px-4 sm:px-6 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-text-muted">
+              Question {Math.min(answeredCount + 1, TOTAL_INTAKE_QUESTIONS)} of{' '}
+              {TOTAL_INTAKE_QUESTIONS}
+            </span>
+            <span className="text-xs text-text-muted">
+              {Math.round((answeredCount / TOTAL_INTAKE_QUESTIONS) * 100)}%
+            </span>
+          </div>
+          <div className="h-1 w-full rounded-full bg-neutral-800 overflow-hidden">
             <motion.div
-              key={`answered-${entry.question.id}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="space-y-1.5"
-            >
-              <p className="text-xs text-text-muted">{entry.question.prompt}</p>
-              <p className="text-sm text-text-primary font-medium">{entry.displayAnswer}</p>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              className="h-full rounded-full bg-sage"
+              initial={{ width: 0 }}
+              animate={{
+                width: `${(answeredCount / TOTAL_INTAKE_QUESTIONS) * 100}%`,
+              }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            />
+          </div>
+        </div>
 
-        {/* Current question */}
-        <AnimatePresence mode="wait">
-          {currentQuestion && (
-            <motion.div
-              key={`active-${currentQuestion.id}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-4"
-            >
-              {/* Question bubble */}
-              <div
-                className={cn(
-                  'max-w-[85vw] sm:max-w-lg',
-                  'bg-surface-alt border border-neutral-800 rounded-3xl',
-                  'px-5 py-4'
-                )}
-              >
-                <p className="text-sm font-medium text-text-primary mb-1">
-                  {currentQuestion.prompt}
-                </p>
-                {currentQuestion.subtext && (
-                  <p className="text-xs text-text-muted">{currentQuestion.subtext}</p>
-                )}
-              </div>
-
-              {/* Input area (staggered after bubble) */}
+        {/* Chat log */}
+        <div
+          ref={scrollRef}
+          role="log"
+          aria-live="polite"
+          className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-6"
+        >
+          {/* Answered questions: read-only bubbles */}
+          <AnimatePresence mode="popLayout">
+            {answeredEntries.map((entry, index) => (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                key={`answered-${entry.question.id}`}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.15 }}
-                className="max-w-[85vw] sm:max-w-lg"
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                className="space-y-1.5"
               >
-                <IntakeQuestion
-                  question={currentQuestion}
-                  onSubmit={handleAnswerSubmit}
-                  isSubmitting={isSubmitting}
-                />
+                <p className="text-xs text-text-muted">{entry.question.prompt}</p>
+                <p className="text-sm text-text-primary font-medium">{entry.displayAnswer}</p>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ))}
+          </AnimatePresence>
 
-        {/* All questions answered: show completion */}
+          {/* Current question */}
+          <AnimatePresence mode="wait">
+            {currentQuestion && (
+              <motion.div
+                key={`active-${currentQuestion.id}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-4"
+              >
+                {/* Question bubble */}
+                <div
+                  className={cn(
+                    'max-w-[85vw] sm:max-w-lg',
+                    'bg-surface-alt border border-neutral-800 rounded-3xl',
+                    'px-5 py-4'
+                  )}
+                >
+                  <p className="text-sm font-medium text-text-primary mb-1">
+                    {currentQuestion.prompt}
+                  </p>
+                  {currentQuestion.subtext && (
+                    <p className="text-xs text-text-muted">{currentQuestion.subtext}</p>
+                  )}
+                </div>
+
+                {/* Input area (staggered after bubble) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: 0.15 }}
+                  className="max-w-[85vw] sm:max-w-lg"
+                >
+                  <IntakeQuestion
+                    question={currentQuestion}
+                    onSubmit={handleAnswerSubmit}
+                    isSubmitting={isSubmitting}
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* All questions answered: show completion */}
+          <AnimatePresence>
+            {isAllDone && canComplete && (
+              <motion.div
+                key="completion"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-4 py-4"
+              >
+                <div
+                  className={cn(
+                    'max-w-[85vw] sm:max-w-lg',
+                    'bg-surface-alt border border-neutral-800 rounded-3xl',
+                    'px-5 py-4'
+                  )}
+                >
+                  <p className="text-sm font-medium text-text-primary">
+                    That covers it. Ready to build your site?
+                  </p>
+                  <p className="text-xs text-text-muted mt-1">
+                    We will use your answers to generate your storefront, pricing, and content.
+                  </p>
+                </div>
+
+                <Button
+                  variant="sage"
+                  size="lg"
+                  className="w-full sm:w-auto shadow-lg hover:shadow-xl hover:shadow-sage/20 transition-all duration-300"
+                  disabled={isCompleting}
+                  onClick={handleComplete}
+                  isLoading={isCompleting}
+                  loadingText="Starting build..."
+                >
+                  <span className="flex items-center gap-2">
+                    Build my site
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Scroll anchor */}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Error region for screen readers */}
+        <div aria-live="assertive" className="sr-only">
+          {error && <p role="alert">{error}</p>}
+        </div>
+
+        {/* Visible error banner */}
         <AnimatePresence>
-          {isAllDone && canComplete && (
+          {error && (
             <motion.div
-              key="completion"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-4 py-4"
+              exit={{ opacity: 0, y: 10 }}
+              className="flex-shrink-0 px-4 sm:px-6 py-3"
             >
               <div
-                className={cn(
-                  'max-w-[85vw] sm:max-w-lg',
-                  'bg-surface-alt border border-neutral-800 rounded-3xl',
-                  'px-5 py-4'
-                )}
+                className="bg-red-900/20 border border-red-400/30 rounded-2xl px-4 py-3"
+                role="alert"
               >
-                <p className="text-sm font-medium text-text-primary">
-                  That covers it. Ready to build your site?
-                </p>
-                <p className="text-xs text-text-muted mt-1">
-                  We will use your answers to generate your storefront, pricing, and content.
-                </p>
+                <p className="text-sm text-red-300">{error}</p>
               </div>
-
-              <Button
-                variant="sage"
-                size="lg"
-                className="w-full sm:w-auto shadow-lg hover:shadow-xl hover:shadow-sage/20 transition-all duration-300"
-                disabled={isCompleting}
-                onClick={handleComplete}
-                isLoading={isCompleting}
-                loadingText="Starting build..."
-              >
-                <span className="flex items-center gap-2">
-                  Build my site
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </span>
-              </Button>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Scroll anchor */}
-        <div ref={bottomRef} />
       </div>
-
-      {/* Error region for screen readers */}
-      <div aria-live="assertive" className="sr-only">
-        {error && <p role="alert">{error}</p>}
-      </div>
-
-      {/* Visible error banner */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="flex-shrink-0 px-4 sm:px-6 py-3"
-          >
-            <div
-              className="bg-red-900/20 border border-red-400/30 rounded-2xl px-4 py-3"
-              role="alert"
-            >
-              <p className="text-sm text-red-300">{error}</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </MotionConfig>
   );
 }
 
