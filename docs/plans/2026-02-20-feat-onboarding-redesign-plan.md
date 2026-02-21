@@ -25,6 +25,10 @@ brainstorm: docs/brainstorms/2026-02-20-onboarding-redesign-tenant-agent-brainst
 8. **Native `<video>` element** over libraries — 0 KB vs 30-80KB for a single onboarding clip
 9. **Stripe Checkout URLs must be generated dynamically per tenant** (confirmed by institutional learning from `multi-tenant-stripe-checkout-url-routing.md`)
 
+### Phase 3 Status: ✅ COMPLETE (core intake form — photo upload + rate limiting deferred to Phase 3b)
+
+Conversational intake form with 10 questions, chat-style UI, per-answer Zod validation, DOMPurify sanitization, SSRF protection for website URLs. Backend: OnboardingIntakeService + 3 new routes (answer, progress, complete) on tenant-admin-onboarding. Frontend: page + IntakeChat + IntakeQuestion components with framer-motion animations, aria-live regions, keyboard accessibility, resume-from-server. 27 new tests, all 2050 pass.
+
 ### Phase 2 Status: ✅ COMPLETE (commit `10209641`)
 
 Simplified signup (email + password only), Stripe Checkout payment step, membership webhook handler, onboarding payment page. Also includes Phase 6 agent prompt rewrite (interviewer → business partner, checklist awareness, pricing consultant). All 1127 tests pass.
@@ -577,33 +581,33 @@ erDiagram
 
 **Backend:**
 
-- [ ] New route: `POST /api/v1/tenant/onboarding/intake/answer` — stores individual answer as discovery fact
-- [ ] New route: `GET /api/v1/tenant/onboarding/intake/progress` — returns answered question IDs + next question
-- [ ] New route: `POST /api/v1/tenant/onboarding/intake/complete` — validates all required answers, triggers build
-- [ ] New route: `POST /api/v1/tenant/onboarding/intake/upload-photo` — handles photo upload during intake
-- [ ] Zod schemas for each answer type (max lengths, URL validation, file validation)
-- [ ] SSRF protection on website URL: reject internal IPs, `file://`, `javascript:` schemes
-- [ ] Magic byte validation for photo uploads (defense-in-depth, per `file-upload-security-hardening.md`)
+- [x] New route: `POST /api/v1/tenant/onboarding/intake/answer` — stores individual answer as discovery fact
+- [x] New route: `GET /api/v1/tenant/onboarding/intake/progress` — returns answered question IDs + next question
+- [x] New route: `POST /api/v1/tenant/onboarding/intake/complete` — validates all required answers, triggers build
+- [ ] New route: `POST /api/v1/tenant/onboarding/intake/upload-photo` — handles photo upload during intake (deferred to Phase 3b)
+- [x] Zod schemas for each answer type (max lengths, URL validation, file validation)
+- [x] SSRF protection on website URL: reject internal IPs, `file://`, `javascript:` schemes
+- [ ] Magic byte validation for photo uploads (defense-in-depth, per `file-upload-security-hardening.md`) (deferred to Phase 3b)
 
 **Frontend:**
 
-- [ ] New page: `/onboarding/intake` — conversational form UI
-- [ ] Chat-bubble UI: questions appear one at a time, answered questions scroll up
-- [ ] Input types per question: text input, select dropdown, multi-select, file upload
-- [ ] Each answer submitted immediately (saved to server, not just client state)
-- [ ] Progress indicator: "Question 3 of 10"
-- [ ] Browser refresh resumes from last answered question (server-side state)
-- [ ] Skip button for optional questions (website URL, photos)
-- [ ] "Continue" button at bottom (visible when all required questions answered)
-- [ ] Keyboard accessibility: Enter to submit answer, Tab between fields
-- [ ] `aria-live` region for new questions (screen reader support)
+- [x] New page: `/onboarding/intake` — conversational form UI
+- [x] Chat-bubble UI: questions appear one at a time, answered questions scroll up
+- [x] Input types per question: text input, select dropdown, multi-select, file upload
+- [x] Each answer submitted immediately (saved to server, not just client state)
+- [x] Progress indicator: "Question 3 of 10"
+- [x] Browser refresh resumes from last answered question (server-side state)
+- [x] Skip button for optional questions (website URL, photos)
+- [x] "Continue" button at bottom (visible when all required questions answered)
+- [x] Keyboard accessibility: Enter to submit answer, Tab between fields
+- [x] `aria-live` region for new questions (screen reader support)
 
 **Security:**
 
-- [ ] Rate limit intake endpoints: 30 requests/min/tenant (prevent abuse)
-- [ ] Sanitize all text inputs (DOMPurify, per existing pattern in `section-content.service.ts`)
-- [ ] Validate photo uploads server-side: magic bytes, max 10MB, allowed types (JPEG, PNG, WebP, HEIC)
-- [ ] SSRF allowlist for website URL scraping (reject private IPs, cloud metadata endpoints)
+- [ ] Rate limit intake endpoints: 30 requests/min/tenant (prevent abuse) (deferred — add before production)
+- [x] Sanitize all text inputs (DOMPurify, per existing pattern in `section-content.service.ts`)
+- [ ] Validate photo uploads server-side: magic bytes, max 10MB, allowed types (JPEG, PNG, WebP, HEIC) (deferred to Phase 3b)
+- [x] SSRF allowlist for website URL scraping (reject private IPs, cloud metadata endpoints)
 
 **Files modified/created:**
 

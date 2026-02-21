@@ -52,6 +52,7 @@ import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.
 import { createTenantAgentService } from '../services/tenant-agent.service';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
 import { createTenantAdminOnboardingRoutes } from './tenant-admin-onboarding.routes';
+import { OnboardingIntakeService } from '../services/onboarding-intake.service';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
 import { createSegmentsRouter } from './segments.routes';
@@ -654,11 +655,16 @@ export function createV1Router(
       logger.info('✅ Tenant admin webhook routes mounted at /v1/tenant-admin/webhooks');
     }
 
-    // Register tenant admin onboarding routes (for Stripe checkout + state)
+    // Register tenant admin onboarding routes (for Stripe checkout + state + intake form)
     // Requires tenant admin authentication
+    // Create intake service when discovery service is available (Phase 3 intake form)
+    const intakeService = services.discovery
+      ? new OnboardingIntakeService(tenantRepo, services.discovery)
+      : undefined;
     const tenantAdminOnboardingRoutes = createTenantAdminOnboardingRoutes({
       config,
       tenantRepo,
+      intakeService,
     });
     app.use('/v1/tenant-admin/onboarding', tenantAuthMiddleware, tenantAdminOnboardingRoutes);
     logger.info('✅ Tenant admin onboarding routes mounted at /v1/tenant-admin/onboarding');
