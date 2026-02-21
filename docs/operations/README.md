@@ -7,13 +7,7 @@
 
 ## Deployment
 
-- [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Comprehensive deployment guide
 - [PRODUCTION_DEPLOYMENT_GUIDE.md](./PRODUCTION_DEPLOYMENT_GUIDE.md) - Production deployment procedures
-- [DEPLOY_NOW.md](./DEPLOY_NOW.md) - Quick deployment reference
-
-## Implementation Checklists
-
-- [SERVER_IMPLEMENTATION_CHECKLIST.md](../../SERVER_IMPLEMENTATION_CHECKLIST.md) - Server setup verification (in root, untracked)
 
 ## See Also
 

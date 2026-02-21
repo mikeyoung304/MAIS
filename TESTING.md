@@ -73,10 +73,9 @@ npm run --workspace=server dev
 
 The E2E tests use environment variables set in `e2e/playwright.config.ts`:
 
-- `VITE_API_URL=http://localhost:3001` - API endpoint
-- `VITE_APP_MODE=mock` - Mock mode for testing
+- `NEXT_PUBLIC_API_URL=http://localhost:3001` - API endpoint (set in `e2e/playwright.config.ts`)
 
-These are automatically injected when Playwright starts the web dev server.
+These are automatically injected when Playwright starts the Next.js dev server.
 
 ### Running Tests
 

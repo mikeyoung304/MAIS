@@ -7,7 +7,7 @@
 [![Test Coverage](https://img.shields.io/badge/coverage-92.2%25-brightgreen)](./TESTING.md)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](./DEVELOPING.md)
 [![Production Ready](https://img.shields.io/badge/production-ready-brightgreen)](./ARCHITECTURE.md)
-[![Platform Maturity](https://img.shields.io/badge/maturity-9.8%2F10-brightgreen)](./docs/sprints/SPRINT_10_FINAL_SUMMARY.md)
+[![Platform Maturity](https://img.shields.io/badge/maturity-9.8%2F10-brightgreen)](./docs/archive/2025-12/sprints/2025-11-24_SPRINT_10_FINAL_SUMMARY.md)
 
 > Done-for-you tech. Done-with-you education. For service professionals who want to focus on their craft.
 
@@ -132,7 +132,7 @@ Club members currently have self-service access to:
 - ✅ Database connection pool optimization
 - ✅ Cache isolation and audit logging
 
-**Roadmap:** See [docs/sprints/SPRINT_10_FINAL_SUMMARY.md](./docs/sprints/SPRINT_10_FINAL_SUMMARY.md) for complete Sprint 10 report and [CHANGELOG.md](./CHANGELOG.md) for version history.
+**Roadmap:** See [Sprint 10 Final Summary](./docs/archive/2025-12/sprints/2025-11-24_SPRINT_10_FINAL_SUMMARY.md) for complete Sprint 10 report and [CHANGELOG.md](./CHANGELOG.md) for version history.
 
 **Next: Production deployment for demo users → Scale to 10+ tenants**
 
@@ -166,7 +166,7 @@ These replaced a 6-agent hub-and-spoke architecture in January 2026 (see ADR-020
 ### Learn More
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Agent architecture and system design
-- **[docs/sprints/SPRINT_10_FINAL_SUMMARY.md](./docs/sprints/SPRINT_10_FINAL_SUMMARY.md)** - Sprint 10 completion report
+- **[Sprint 10 Final Summary](./docs/archive/2025-12/sprints/2025-11-24_SPRINT_10_FINAL_SUMMARY.md)** - Sprint 10 completion report
 - **[server/src/agent-v2/deploy/SERVICE_REGISTRY.md](./server/src/agent-v2/deploy/SERVICE_REGISTRY.md)** - Agent deployment registry
 
 **Status**: Production (January 2026). 3-agent architecture live, storefront content via SectionContent table.
@@ -656,7 +656,7 @@ MAIS offers an embeddable booking widget that tenants can add to their existing 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture, patterns, and data flow
 - **[MULTI_TENANT_IMPLEMENTATION_GUIDE.md](./docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md)** - Multi-tenant architecture guide
 - **[MULTI_TENANT_ROADMAP.md](./docs/multi-tenant/MULTI_TENANT_ROADMAP.md)** - Phased plan for tenant self-service features
-- **[PHASE_5_IMPLEMENTATION_SPEC.md](./docs/phases/PHASE_5_IMPLEMENTATION_SPEC.md)** - Technical specs for Priority 1 features
+- **[PHASE_5_IMPLEMENTATION_SPEC.md](./docs/archive/2025-11/phases/PHASE_5_IMPLEMENTATION_SPEC.md)** - Technical specs for Priority 1 features
 - **[DECISIONS.md](./DECISIONS.md)** - Architectural Decision Records (ADRs)
 - **[SUPABASE.md](./docs/setup/SUPABASE.md)** - Database setup and integration guide
 
@@ -672,8 +672,8 @@ MAIS offers an embeddable booking widget that tenants can add to their existing 
 
 ### Migration & Project History
 
-- **[PHASE_1_COMPLETION_REPORT.md](./docs/phases/PHASE_1_COMPLETION_REPORT.md)** - Phase 1: Multi-tenant foundation
-- **[PHASE_2B_COMPLETION_REPORT.md](./docs/phases/PHASE_2B_COMPLETION_REPORT.md)** - Phase 2B completion summary
+- **[PHASE_1_COMPLETION_REPORT.md](./docs/archive/2025-11/phases/PHASE_1_COMPLETION_REPORT.md)** - Phase 1: Multi-tenant foundation
+- **[PHASE_2B_COMPLETION_REPORT.md](./docs/archive/2025-11/phases/PHASE_2B_COMPLETION_REPORT.md)** - Phase 2B completion summary
 
 ---
 
@@ -792,9 +792,9 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 ### Quick Links
 
-- **[SESSION_SUMMARY.md](./SESSION_SUMMARY.md)** - Quick reference summary of Phase 1 completion
-- **[FORWARD_PLAN.md](./FORWARD_PLAN.md)** - Comprehensive phased plan for reaching 100%
-- **[FINAL_COMPLETION_REPORT.md](./FINAL_COMPLETION_REPORT.md)** - Complete Phase 1 achievement report
+- **[SESSION_SUMMARY.md](./docs/archive/2025-11/analysis/SESSION_SUMMARY.md)** - Quick reference summary of Phase 1 completion
+- **[FORWARD_PLAN.md](./docs/archive/2025-11/analysis/FORWARD_PLAN.md)** - Comprehensive phased plan for reaching 100%
+- **[FINAL_COMPLETION_REPORT.md](./docs/archive/2025-11/analysis/FINAL_COMPLETION_REPORT.md)** - Complete Phase 1 achievement report
 
 ### Sprint 10 Phase 2 Complete (Nov 24, 2025)
 

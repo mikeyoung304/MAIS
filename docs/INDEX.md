@@ -28,7 +28,7 @@ Welcome to the MAIS documentation hub. This index helps you navigate all availab
 
 - **[README.md](./README.md)** - Main documentation hub with Diátaxis framework introduction
 - **[DOCUMENTATION_QUICK_REFERENCE.md](./DOCUMENTATION_QUICK_REFERENCE.md)** - 30-second guide for contributors
-- **[DOCUMENTATION_STANDARDS.md](./DOCUMENTATION_STANDARDS.md)** - Comprehensive governance and standards
+- **[DOCUMENTATION_STANDARDS.md](./archive/2026-02/DOCUMENTATION_STANDARDS.md)** - Comprehensive governance and standards (archived)
 - **[DIATAXIS_IMPLEMENTATION_GUIDE.md](./DIATAXIS_IMPLEMENTATION_GUIDE.md)** - Deep dive on framework
 
 **Architecture Decision Records:**
@@ -49,7 +49,7 @@ Welcome to the MAIS documentation hub. This index helps you navigate all availab
   - [archive/sprints/](./archive/sprints/) - Sprint 1-3: Foundation and early features
 
 - **Planning Documentation:**
-  - [archive/planning/2025-01-analysis/](./archive/planning/2025-01-analysis/) - Complete platform transformation analysis
+  - [archive/2025-01/planning/2025-01-analysis/](./archive/2025-01/planning/2025-01-analysis/) - Complete platform transformation analysis
   - Config schema design, versioning strategy, agent integration specs
 
 ## 📦 Multi-Tenant Features
@@ -58,7 +58,7 @@ Welcome to the MAIS documentation hub. This index helps you navigate all availab
 
 - **[multi-tenant/MULTI_TENANT_ROADMAP.md](./multi-tenant/MULTI_TENANT_ROADMAP.md)** - Phased tenant self-service implementation plan
 - **[multi-tenant/TENANT_ADMIN_USER_GUIDE.md](./multi-tenant/TENANT_ADMIN_USER_GUIDE.md)** - Tenant admin user guide
-- **[multi-tenant/MULTI_TENANCY_READINESS_REPORT.md](./multi-tenant/MULTI_TENANCY_READINESS_REPORT.md)** - Multi-tenancy readiness assessment
+- **[Multi-Tenancy Readiness Report](./archive/2025-11/planning/MULTI_TENANCY_READINESS_REPORT.md)** - Multi-tenancy readiness assessment (archived)
 
 ## 🛠️ Setup & Configuration
 
@@ -84,8 +84,7 @@ Welcome to the MAIS documentation hub. This index helps you navigate all availab
 
 - **[operations/RUNBOOK.md](./operations/RUNBOOK.md)** - Operational procedures and troubleshooting
 - **[operations/INCIDENT_RESPONSE.md](./operations/INCIDENT_RESPONSE.md)** - Production incident response playbook
-- **[operations/DEPLOYMENT_GUIDE.md](./operations/DEPLOYMENT_GUIDE.md)** - Deployment procedures
-- **[operations/PRODUCTION_DEPLOYMENT_GUIDE.md](./operations/PRODUCTION_DEPLOYMENT_GUIDE.md)** - Production deployment checklist
+- **[operations/PRODUCTION_DEPLOYMENT_GUIDE.md](./operations/PRODUCTION_DEPLOYMENT_GUIDE.md)** - Production deployment procedures
 
 ## 📖 API Documentation
 
@@ -133,7 +132,7 @@ Welcome to the MAIS documentation hub. This index helps you navigate all availab
 | What you want to do       | Where to look                                                                                            |
 | ------------------------- | -------------------------------------------------------------------------------------------------------- |
 | Set up local development  | [README.md](../README.md) → Quick Start                                                                  |
-| Deploy to production      | [operations/DEPLOYMENT_GUIDE.md](./operations/DEPLOYMENT_GUIDE.md)                                       |
+| Deploy to production      | [operations/PRODUCTION_DEPLOYMENT_GUIDE.md](./operations/PRODUCTION_DEPLOYMENT_GUIDE.md)                 |
 | Understand architecture   | [ARCHITECTURE.md](../ARCHITECTURE.md)                                                                    |
 | Fix a production incident | [operations/INCIDENT_RESPONSE.md](./operations/INCIDENT_RESPONSE.md)                                     |
 | Add a new feature         | [DEVELOPING.md](../DEVELOPING.md)                                                                        |
@@ -148,21 +147,12 @@ Welcome to the MAIS documentation hub. This index helps you navigate all availab
 **IMPORTANT:** Before creating or updating documentation:
 
 - **Quick answers?** See [Documentation Quick Reference](./DOCUMENTATION_QUICK_REFERENCE.md) (30-second guide)
-- **Full standards?** See [Documentation Standards](./DOCUMENTATION_STANDARDS.md) (comprehensive guide)
-
-This comprehensive guide covers:
-
-- **Naming Conventions:** When to use UPPERCASE_UNDERSCORE vs kebab-case vs timestamps vs ADR format
-- **File Placement Rules:** Decision tree for "where does this document go?"
-- **Metadata Requirements:** Required headers and versioning
-- **Review Process:** Security checks, deduplication, validation
-- **Archive Policy:** When and how to archive old documentation
-- **Ownership Model:** Who reviews what and escalation paths
+- **Full standards?** See [CLAUDE.md](../CLAUDE.md) (the real documentation standard)
 
 **Quick Reference:**
 
-1. **Place it correctly:** Use decision tree in [DOCUMENTATION_STANDARDS.md](./DOCUMENTATION_STANDARDS.md#quick-decision-trees)
-2. **Name it properly:** Follow [naming conventions](./DOCUMENTATION_STANDARDS.md#1-naming-conventions)
+1. **Place it correctly:** Use the existing directory structure in `docs/`
+2. **Name it properly:** UPPERCASE_UNDERSCORE for standalone docs, kebab-case for subdirectory files
 3. **Add metadata headers:** Include version, date, owner, status
 4. **Update this index** with a link to your new document
 5. **Run security check:** No exposed secrets or PII
