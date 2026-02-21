@@ -4,7 +4,7 @@
  */
 
 import type { PrismaClient, Tenant } from '../../generated/prisma/client';
-import type { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import { TenantPublicDtoSchema } from '@macon/contracts';
 import type { TenantPublicDto } from '@macon/contracts';
 // NOTE: LandingPageConfigSchema, LenientLandingPageConfigSchema removed
@@ -56,6 +56,9 @@ export interface UpdateTenantInput {
   buildStatus?: string | null;
   buildError?: string | null;
   buildIdempotencyKey?: string | null;
+  buildSectionResults?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+  buildStartedAt?: Date | null;
+  buildRetryCount?: number;
 }
 
 /**

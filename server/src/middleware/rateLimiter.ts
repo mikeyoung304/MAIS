@@ -502,6 +502,31 @@ export const webhookLimiter = rateLimit({
   },
 });
 
+/**
+ * Rate limiter for build retry endpoint (per-tenant)
+ * 3 retries per hour per tenant — prevents abuse of costly LLM build pipeline
+ *
+ * Protects against:
+ * - Excessive LLM API calls (each build triggers 3+ Vertex AI generations)
+ * - Denial of wallet via repeated build triggers
+ */
+export const buildRetryLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: isTestEnvironment ? 500 : 3, // 3 retries per hour per tenant
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (_req, res) => res.locals.tenantAuth?.tenantId || normalizeIp(_req.ip),
+  skip: (_req, res) => !res.locals.tenantAuth,
+  validate: false,
+  handler: (_req: Request, res: Response) => {
+    logger.warn({ tenantId: res.locals.tenantAuth?.tenantId }, 'Build retry rate limit exceeded');
+    res.status(429).json({
+      error: 'too_many_retries',
+      message: 'Too many build retries. Please try again later.',
+    });
+  },
+});
+
 export const skipIfHealth = (req: Request, _res: Response, next: NextFunction) => {
   // Skip rate limiting for health/ready endpoints
   if (req.path === '/health' || req.path === '/ready') {

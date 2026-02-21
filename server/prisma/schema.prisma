@@ -126,9 +126,12 @@ model Tenant {
   onboardingVersion     Int              @default(0) // Optimistic locking version counter
 
   // Background Build Pipeline (Phase 4)
-  buildStatus              String? // QUEUED | SCRAPING | GENERATING_HERO | GENERATING_ABOUT | GENERATING_SERVICES | COMPLETE | FAILED
+  buildStatus              String? // QUEUED | GENERATING_HERO | GENERATING_ABOUT | GENERATING_SERVICES | COMPLETE | FAILED
   buildError               String? @db.Text // Error message if buildStatus = FAILED
   buildIdempotencyKey      String? @unique // Prevents duplicate build triggers
+  buildSectionResults      Json?   // Per-section outcomes: { hero: 'complete', about: 'failed', ... }
+  buildStartedAt           DateTime? // When build pipeline started (for stuck build detection)
+  buildRetryCount          Int     @default(0) // Number of build retries (max 5)
   dismissedChecklistItems  String[] @default([]) // Checklist items user has skipped
 
   // Brain dump + location (legacy — intake form replaces these for new tenants)

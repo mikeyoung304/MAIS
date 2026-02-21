@@ -24,6 +24,7 @@ import type { OnboardingIntakeService } from '../services/onboarding-intake.serv
 import { IntakeValidationError } from '../services/onboarding-intake.service';
 import type { BackgroundBuildService } from '../services/background-build.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
+import { buildRetryLimiter } from '../middleware/rateLimiter';
 import {
   IntakeAnswerRequestSchema,
   DismissChecklistItemSchema,
@@ -411,38 +412,53 @@ export function createTenantAdminOnboardingRoutes(options: OnboardingRoutesOptio
   /**
    * POST /build/retry
    *
-   * Retries a failed build. Only works when buildStatus is FAILED.
+   * Retries a failed or stuck build.
+   * Rate limited: 3 retries per hour per tenant (11075).
+   * Max 5 total retries tracked in buildRetryCount.
    *
-   * Response: { triggered: boolean }
+   * Response: { triggered: boolean, error?: string }
    *
-   * Requires: buildService configured, buildStatus === FAILED
+   * Requires: buildService configured, buildStatus in retryable state
    */
-  router.post('/build/retry', async (_req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
+  router.post(
+    '/build/retry',
+    buildRetryLimiter,
+    async (_req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const { tenantId } = tenantAuth;
+
+        if (!buildService) {
+          res.status(503).json({ error: 'Build service not configured' });
+          return;
+        }
+
+        const result = await buildService.retryBuild(tenantId);
+
+        if (!result.triggered && result.error) {
+          logger.info(
+            { tenantId, error: result.error, event: 'build_retry_rejected' },
+            'Build retry rejected'
+          );
+          res.status(400).json(result);
+          return;
+        }
+
+        logger.info(
+          { tenantId, triggered: result.triggered, event: 'build_retry' },
+          `Build retry: ${result.triggered ? 'triggered' : 'skipped'}`
+        );
+
+        res.status(200).json(result);
+      } catch (error) {
+        next(error);
       }
-      const { tenantId } = tenantAuth;
-
-      if (!buildService) {
-        res.status(503).json({ error: 'Build service not configured' });
-        return;
-      }
-
-      const result = await buildService.retryBuild(tenantId);
-
-      logger.info(
-        { tenantId, triggered: result.triggered, event: 'build_retry' },
-        `Build retry: ${result.triggered ? 'triggered' : 'skipped'}`
-      );
-
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
     }
-  });
+  );
 
   // ==========================================================================
   // Setup Progress Routes (Phase 6 — Checklist)

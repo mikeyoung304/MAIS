@@ -5,19 +5,21 @@
  * 1. triggerBuild — happy path: sets QUEUED, calls setImmediate
  * 2. triggerBuild — idempotency: duplicate key returns { triggered: false }
  * 3. getBuildStatus — correct shape for every build state
- * 4. retryBuild — only works from FAILED state
- * 5. retryBuild — non-FAILED state returns { triggered: false }
- * 6. deriveSectionStatus — all status → section-status mappings (via getBuildStatus)
- * 7. generateFallbackContent — valid content shape for HERO, ABOUT, SERVICES
+ * 4. getBuildStatus — stuck build detection (11081)
+ * 5. retryBuild — only works from FAILED or stuck states
+ * 6. retryBuild — max retry enforcement (11075)
+ * 7. deriveSectionStatus — all status -> section-status mappings (via getBuildStatus)
+ * 8. generateFallbackContent — valid content shape for HERO, ABOUT, SERVICES
  *    (tested through executeBuild by forcing LLM mock to throw, then verifying
  *    sectionContent.addSection is called with the expected shape)
  *
- * Concurrency / advisory-lock and the actual LLM call are NOT tested here;
- * those are integration concerns. We only test the fallback path.
+ * Concurrency / advisory-lock is tested at the mock level
+ * (prisma.$transaction wrapping pg_try_advisory_xact_lock).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Tenant } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 
 // ---------------------------------------------------------------------------
 // Mock logger — must be declared before importing the module under test
@@ -87,6 +89,9 @@ function makeTenant(overrides: Partial<Tenant> = {}): Tenant {
     buildStatus: null,
     buildError: null,
     buildIdempotencyKey: null,
+    buildSectionResults: null,
+    buildStartedAt: null,
+    buildRetryCount: 0,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,
@@ -137,8 +142,18 @@ function makeDiscoveryService(
 }
 
 function makePrisma() {
+  // The service uses prisma.$transaction() with pg_try_advisory_xact_lock inside.
+  // The callback receives a transaction client (tx) that also has $queryRaw.
+  const txClient = {
+    $queryRaw: vi.fn().mockResolvedValue([{ pg_try_advisory_xact_lock: true }]),
+  };
+
   return {
-    $queryRaw: vi.fn().mockResolvedValue([{ pg_try_advisory_lock: true }]),
+    $transaction: vi.fn(async (callback: (tx: typeof txClient) => Promise<void>) => {
+      await callback(txClient);
+    }),
+    // Exposed for tests to override advisory lock behavior
+    _txClient: txClient,
   };
 }
 
@@ -185,7 +200,7 @@ describe('BackgroundBuildService', () => {
   // =========================================================================
 
   describe('triggerBuild', () => {
-    it('sets buildStatus to QUEUED and returns { triggered: true }', async () => {
+    it('sets buildStatus to QUEUED with buildStartedAt and returns { triggered: true }', async () => {
       const { service, tenantRepo } = buildService();
 
       const result = await service.triggerBuild('tenant_abc123');
@@ -195,6 +210,8 @@ describe('BackgroundBuildService', () => {
         buildStatus: BUILD_STATUS.QUEUED,
         buildError: null,
         buildIdempotencyKey: null,
+        buildStartedAt: expect.any(Date),
+        buildSectionResults: Prisma.DbNull,
       });
     });
 
@@ -207,6 +224,8 @@ describe('BackgroundBuildService', () => {
         buildStatus: BUILD_STATUS.QUEUED,
         buildError: null,
         buildIdempotencyKey: 'idem-key-42',
+        buildStartedAt: expect.any(Date),
+        buildSectionResults: Prisma.DbNull,
       });
     });
 
@@ -358,14 +377,14 @@ describe('BackgroundBuildService', () => {
     it('returns FAILED status with all sections failed and error message', async () => {
       const { service } = buildService({
         buildStatus: BUILD_STATUS.FAILED,
-        buildError: 'All section generations failed.',
+        buildError: 'Build failed. Please try again.',
       });
 
       const result = await service.getBuildStatus('tenant_abc123');
 
       expect(result).toEqual<BuildStatusResponse>({
         buildStatus: BUILD_STATUS.FAILED,
-        buildError: 'All section generations failed.',
+        buildError: 'Build failed. Please try again.',
         sections: { hero: 'failed', about: 'failed', services: 'failed' },
       });
     });
@@ -385,6 +404,62 @@ describe('BackgroundBuildService', () => {
 
       expect(result.sections).toEqual({ hero: 'pending', about: 'pending', services: 'pending' });
     });
+
+    it('auto-fails a stuck build that exceeds timeout (11081)', async () => {
+      // Build started 5 minutes ago — well past the STUCK_BUILD_TIMEOUT_MS (4 min)
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const { service, tenantRepo } = buildService({
+        buildStatus: BUILD_STATUS.GENERATING_HERO,
+        buildStartedAt: fiveMinAgo,
+      });
+
+      const result = await service.getBuildStatus('tenant_abc123');
+
+      expect(result.buildStatus).toBe(BUILD_STATUS.FAILED);
+      expect(result.buildError).toBe('Build timed out. Please try again.');
+      // Should have called setBuildFailed
+      expect(tenantRepo.update).toHaveBeenCalledWith('tenant_abc123', {
+        buildStatus: BUILD_STATUS.FAILED,
+        buildError: 'Build timed out. Please try again.',
+      });
+    });
+
+    it('does NOT auto-fail builds within the timeout window', async () => {
+      // Build started 1 minute ago — well within the timeout
+      const oneMinAgo = new Date(Date.now() - 60 * 1000);
+      const { service, tenantRepo } = buildService({
+        buildStatus: BUILD_STATUS.GENERATING_HERO,
+        buildStartedAt: oneMinAgo,
+      });
+
+      const result = await service.getBuildStatus('tenant_abc123');
+
+      expect(result.buildStatus).toBe(BUILD_STATUS.GENERATING_HERO);
+      // update should NOT have been called for stuck detection
+      expect(tenantRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('does NOT auto-fail COMPLETE or FAILED builds regardless of time', async () => {
+      const longAgo = new Date(Date.now() - 10 * 60 * 1000);
+
+      // Test COMPLETE
+      const { service: completeService, tenantRepo: completeRepo } = buildService({
+        buildStatus: BUILD_STATUS.COMPLETE,
+        buildStartedAt: longAgo,
+      });
+      const completeResult = await completeService.getBuildStatus('tenant_abc123');
+      expect(completeResult.buildStatus).toBe(BUILD_STATUS.COMPLETE);
+      expect(completeRepo.update).not.toHaveBeenCalled();
+
+      // Test FAILED
+      const { service: failedService, tenantRepo: failedRepo } = buildService({
+        buildStatus: BUILD_STATUS.FAILED,
+        buildStartedAt: longAgo,
+      });
+      const failedResult = await failedService.getBuildStatus('tenant_abc123');
+      expect(failedResult.buildStatus).toBe(BUILD_STATUS.FAILED);
+      expect(failedRepo.update).not.toHaveBeenCalled();
+    });
   });
 
   // =========================================================================
@@ -398,48 +473,72 @@ describe('BackgroundBuildService', () => {
       const result = await service.retryBuild('tenant_abc123');
 
       expect(result).toEqual({ triggered: true });
-      // update must have been called to set QUEUED (via triggerBuild)
+      // First call: increment buildRetryCount
+      expect(tenantRepo.update).toHaveBeenCalledWith('tenant_abc123', {
+        buildRetryCount: 1,
+      });
+      // Second call: triggerBuild sets QUEUED
       expect(tenantRepo.update).toHaveBeenCalledWith('tenant_abc123', {
         buildStatus: BUILD_STATUS.QUEUED,
         buildError: null,
         buildIdempotencyKey: null,
+        buildStartedAt: expect.any(Date),
+        buildSectionResults: Prisma.DbNull,
       });
     });
 
-    it('returns { triggered: false } when status is QUEUED', async () => {
-      const { service, tenantRepo } = buildService({ buildStatus: BUILD_STATUS.QUEUED });
+    it('returns error when status is QUEUED and not stuck', async () => {
+      const { service, tenantRepo } = buildService({
+        buildStatus: BUILD_STATUS.QUEUED,
+        buildStartedAt: new Date(), // just started
+      });
 
       const result = await service.retryBuild('tenant_abc123');
 
-      expect(result).toEqual({ triggered: false });
+      expect(result).toEqual({
+        triggered: false,
+        error: 'Build is not in a retryable state.',
+      });
       expect(tenantRepo.update).not.toHaveBeenCalled();
     });
 
-    it('returns { triggered: false } when status is COMPLETE', async () => {
+    it('returns error when status is COMPLETE', async () => {
       const { service, tenantRepo } = buildService({ buildStatus: BUILD_STATUS.COMPLETE });
 
       const result = await service.retryBuild('tenant_abc123');
 
-      expect(result).toEqual({ triggered: false });
+      expect(result).toEqual({
+        triggered: false,
+        error: 'Build is not in a retryable state.',
+      });
       expect(tenantRepo.update).not.toHaveBeenCalled();
     });
 
-    it('returns { triggered: false } when status is GENERATING_HERO', async () => {
-      const { service, tenantRepo } = buildService({ buildStatus: BUILD_STATUS.GENERATING_HERO });
+    it('returns error when status is GENERATING_HERO and not stuck', async () => {
+      const { service, tenantRepo } = buildService({
+        buildStatus: BUILD_STATUS.GENERATING_HERO,
+        buildStartedAt: new Date(), // just started
+      });
 
       const result = await service.retryBuild('tenant_abc123');
 
-      expect(result).toEqual({ triggered: false });
+      expect(result).toEqual({
+        triggered: false,
+        error: 'Build is not in a retryable state.',
+      });
       expect(tenantRepo.update).not.toHaveBeenCalled();
     });
 
-    it('returns { triggered: false } when tenant is not found', async () => {
+    it('returns error when tenant is not found', async () => {
       const { service, tenantRepo } = buildService();
       tenantRepo.findById.mockResolvedValue(null);
 
       const result = await service.retryBuild('tenant_abc123');
 
-      expect(result).toEqual({ triggered: false });
+      expect(result).toEqual({
+        triggered: false,
+        error: 'Tenant not found',
+      });
       expect(tenantRepo.update).not.toHaveBeenCalled();
     });
 
@@ -448,11 +547,70 @@ describe('BackgroundBuildService', () => {
 
       await service.retryBuild('tenant_abc123');
 
+      // The triggerBuild call should have null idempotencyKey
       expect(tenantRepo.update).toHaveBeenCalledWith('tenant_abc123', {
         buildStatus: BUILD_STATUS.QUEUED,
         buildError: null,
-        buildIdempotencyKey: null, // Retry clears the key to allow a fresh run
+        buildIdempotencyKey: null,
+        buildStartedAt: expect.any(Date),
+        buildSectionResults: Prisma.DbNull,
       });
+    });
+
+    it('allows retry from stuck QUEUED state (11081)', async () => {
+      // Build started 5 minutes ago — past STUCK_BUILD_TIMEOUT_MS (4 min)
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const { service, tenantRepo } = buildService({
+        buildStatus: BUILD_STATUS.QUEUED,
+        buildStartedAt: fiveMinAgo,
+      });
+
+      const result = await service.retryBuild('tenant_abc123');
+
+      expect(result).toEqual({ triggered: true });
+      expect(tenantRepo.update).toHaveBeenCalledWith('tenant_abc123', {
+        buildRetryCount: 1,
+      });
+    });
+
+    it('allows retry from stuck GENERATING state (11081)', async () => {
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const { service } = buildService({
+        buildStatus: BUILD_STATUS.GENERATING_ABOUT,
+        buildStartedAt: fiveMinAgo,
+      });
+
+      const result = await service.retryBuild('tenant_abc123');
+
+      expect(result).toEqual({ triggered: true });
+    });
+
+    it('rejects retry when max retries exceeded (11075)', async () => {
+      const { service, tenantRepo } = buildService({
+        buildStatus: BUILD_STATUS.FAILED,
+        buildRetryCount: 5, // MAX_BUILD_RETRIES
+      });
+
+      const result = await service.retryBuild('tenant_abc123');
+
+      expect(result).toEqual({
+        triggered: false,
+        error: 'Maximum build retries exceeded. Please contact support.',
+      });
+      expect(tenantRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('increments buildRetryCount before re-triggering', async () => {
+      const { service, tenantRepo } = buildService({
+        buildStatus: BUILD_STATUS.FAILED,
+        buildRetryCount: 2,
+      });
+
+      await service.retryBuild('tenant_abc123');
+
+      // First update call should increment retry count
+      const firstCall = tenantRepo.update.mock.calls[0];
+      expect(firstCall[1]).toEqual({ buildRetryCount: 3 });
     });
   });
 
@@ -478,7 +636,7 @@ describe('BackgroundBuildService', () => {
     ];
 
     it.each(STATUS_SECTION_MAP)(
-      'buildStatus=%s → sections=%o',
+      'buildStatus=%s -> sections=%o',
       async (buildStatus, expectedSections) => {
         const { service } = buildService({ buildStatus: buildStatus as string | null });
 
@@ -490,7 +648,7 @@ describe('BackgroundBuildService', () => {
   });
 
   // =========================================================================
-  // generateFallbackContent — via executeBuild (LLM throws → fallback used)
+  // generateFallbackContent — via executeBuild (LLM throws -> fallback used)
   // =========================================================================
 
   describe('generateFallbackContent (LLM unavailable path)', () => {
@@ -747,7 +905,7 @@ describe('BackgroundBuildService', () => {
       expect(failedCalls.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('moves through GENERATING_HERO → GENERATING_ABOUT → GENERATING_SERVICES status updates', async () => {
+    it('moves through GENERATING_HERO -> GENERATING_ABOUT -> GENERATING_SERVICES status updates', async () => {
       const { service, tenantRepo } = buildService(
         { buildStatus: null },
         {
@@ -770,19 +928,41 @@ describe('BackgroundBuildService', () => {
 
     it('does not advance to COMPLETE when advisory lock cannot be acquired', async () => {
       const { service, tenantRepo, prisma } = buildService({ buildStatus: null });
-      // Make the lock fail
-      prisma.$queryRaw.mockResolvedValueOnce([{ pg_try_advisory_lock: false }]);
+      // Make the lock fail inside the transaction
+      prisma._txClient.$queryRaw.mockResolvedValueOnce([{ pg_try_advisory_xact_lock: false }]);
 
       await service.triggerBuild('tenant_abc123');
       await flushSetImmediate();
       await new Promise((r) => setTimeout(r, 0));
 
-      // Only QUEUED update should have been called, no further status changes
+      // Only QUEUED update should have been called (triggerBuild), no further status changes
       const buildStatusUpdates = tenantRepo.update.mock.calls.filter((args: unknown[]) => {
         const payload = args[1] as Record<string, unknown>;
         return payload.buildStatus && payload.buildStatus !== BUILD_STATUS.QUEUED;
       });
       expect(buildStatusUpdates).toHaveLength(0);
+    });
+
+    it('persists per-section results during build (11077)', async () => {
+      const { service, tenantRepo } = buildService(
+        { buildStatus: null },
+        {
+          facts: { businessName: 'Studio X', businessType: 'photographer' },
+        }
+      );
+
+      await service.triggerBuild('tenant_abc123');
+      await flushSetImmediate();
+      await new Promise((r) => setTimeout(r, 0));
+
+      // Find calls that set buildSectionResults (excluding the DbNull reset in triggerBuild)
+      const sectionResultCalls = tenantRepo.update.mock.calls.filter(
+        (args: unknown[]) =>
+          (args[1] as Record<string, unknown>).buildSectionResults !== undefined &&
+          (args[1] as Record<string, unknown>).buildSectionResults !== Prisma.DbNull
+      );
+      // Should have at least 3 incremental updates (one per section) plus the final update
+      expect(sectionResultCalls.length).toBeGreaterThanOrEqual(3);
     });
   });
 
@@ -820,7 +1000,7 @@ describe('BackgroundBuildService', () => {
       expect(result).toEqual({ triggered: true });
     });
 
-    it('retry from non-FAILED is idempotent and returns triggered=false', async () => {
+    it('retry from non-FAILED and non-stuck returns triggered=false with error', async () => {
       for (const status of [
         BUILD_STATUS.QUEUED,
         BUILD_STATUS.GENERATING_HERO,
@@ -828,9 +1008,13 @@ describe('BackgroundBuildService', () => {
         BUILD_STATUS.GENERATING_SERVICES,
         BUILD_STATUS.COMPLETE,
       ]) {
-        const { service } = buildService({ buildStatus: status });
+        const { service } = buildService({
+          buildStatus: status,
+          buildStartedAt: new Date(), // recently started, not stuck
+        });
         const result = await service.retryBuild('tenant_abc123');
-        expect(result).toEqual({ triggered: false });
+        expect(result.triggered).toBe(false);
+        expect(result.error).toBeDefined();
       }
     });
   });
